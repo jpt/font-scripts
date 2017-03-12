@@ -9,13 +9,9 @@ import GlyphsApp
 import re
 brace = re.compile("^{\d+,\s*\d+}$")
 
-Font = Glyphs.font
+font = Glyphs.font
 
-
-print Font.glyphs['a'].layers
-
-
-for glyph in Font.glyphs:
+for glyph in font.glyphs:
   if glyph.layers > 1 and '.' not in glyph.name:
     for layer in glyph.layers:
       if brace.match(layer.name):

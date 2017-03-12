@@ -5,11 +5,10 @@ __doc__="""
 Re-interpolate sidebearings of brace layers
 """
 
-import GlyphsApp
-import re
-brace = re.compile("^{\d+,\s*\d+}$")
+import GlyphsApp, re
 
 font = Glyphs.font
+brace = re.compile("^{\s*\d+,\s*\d+\s*}$")
 
 for glyph in font.glyphs:
   if glyph.layers > 1 and '.' not in glyph.name:

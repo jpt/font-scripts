@@ -8,7 +8,7 @@ Re-interpolate sidebearings of brace layers
 import GlyphsApp, re
 
 font = Glyphs.font
-brace = re.compile("^{\s*\d+,\s*\d+\s*}$")
+brace = re.compile("^{\s*\d+\s*,\s*\d+\s*}$")
 
 for glyph in font.glyphs:
   if glyph.layers > 1 and '.' not in glyph.name:

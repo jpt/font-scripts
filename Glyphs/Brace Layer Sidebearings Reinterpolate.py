@@ -1,4 +1,4 @@
-#MenuTitle: Sidebearings Brace Layer Fix
+#MenuTitle: Brace Layer Sidebearings Reinterpolate
 # -*- coding: utf-8 -*-
 
 __doc__="""

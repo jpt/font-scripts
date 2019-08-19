@@ -103,10 +103,6 @@ class FamilySteps( object ):
 				for i, instance in enumerate(Glyphs.font.instances):
 					instance.weightValue = abrahamSteps[i]
 
-
-	def weightNames( self ):
-		return ['Thin','UltraLight','Light','Regular','Medium','SemiBold','Bold','ExtraBold','Black']
-
 	def numInstances( self ):
 		try:
 			if(self.w.numSteps.get() > 0):

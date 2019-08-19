@@ -18,7 +18,6 @@ class FamilySteps( object ):
 		)
 
 		linePos, inset, lineHeight = 12, 15, 22
-		column = 80
 
 		self.w.numStepsText = vanilla.TextBox( (inset, linePos+2, 110, 17), "Number of steps:", sizeStyle='small')
 
@@ -59,9 +58,9 @@ class FamilySteps( object ):
 		linePos += lineHeight*9 -8
 
 		self.w.applyEqual = vanilla.Button((inset,linePos, 60, 17), "Apply", sizeStyle='small', callback=self.apply)
-		self.w.applyLucas = vanilla.Button((inset+72,linePos, 60, 17), "Apply ", sizeStyle='small', callback=self.apply)
-		self.w.applyImpallari = vanilla.Button((inset+144,linePos, 60, 17), "Apply  ", sizeStyle='small', callback=self.apply)
-		self.w.applyAbraham = vanilla.Button((inset+216,linePos, 60, 17), "Apply   ", sizeStyle='small', callback=self.apply)
+		self.w.applyLucas = vanilla.Button((inset+72,linePos, 60, 17), "Apply", sizeStyle='small', callback=self.apply)
+		self.w.applyImpallari = vanilla.Button((inset+144,linePos, 60, 17), "Apply", sizeStyle='small', callback=self.apply)
+		self.w.applyAbraham = vanilla.Button((inset+216,linePos, 60, 17), "Apply", sizeStyle='small', callback=self.apply)
 		
 
 		self.w.open()

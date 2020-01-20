@@ -84,7 +84,7 @@ class FamilySteps( object ):
 		steps = self.w.numSteps.get()
 		existingSteps = len(Glyphs.font.instances)
 		equalSteps, lucasSteps, impallariSteps, abrahamSteps = self.w.equalList.get(), self.w.lucasList.get(), self.w.impallariList.get(), self.w.abrahamList.get()
-		print steps,existingSteps
+
 		if(int(steps) != int(existingSteps)):
 			Message(title="Cannot Apply Instances", message="You do not have the same number of instances in the calculator as the font. Please add/remove instances in Font Info->Instances.", OKButton=None)
 			return

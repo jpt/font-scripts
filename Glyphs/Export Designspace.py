@@ -104,10 +104,10 @@ class ExportDesignspace( object ):
     return True
 
 
-  def affine(a,b,c,d,x): # minInput, maxInput, minOutput, maxOutput, x -- see https://math.stackexchange.com/q/377169
+  def affine(self,a,b,c,d,x): # minInput, maxInput, minOutput, maxOutput, x -- see https://math.stackexchange.com/q/377169
     return (x-a)*((d-c)/(b-a))+c
 
-  def findMiddle(inputList):
+  def findMiddle(self,inputList):
       middle = float(len(inputList))/2
       if middle % 2 != 0:
           return inputList[int(middle - .5)]
@@ -166,13 +166,13 @@ class ExportDesignspace( object ):
 
     if distribute:
       for masterVal in masterValInputs:
-           i = affine(masterMin, masterMax, minWeightOutput, maxWeightOutput, masterVal)
+           i = self.affine(masterMin, masterMax, minWeightOutput, maxWeightOutput, masterVal)
            masterValOutputs.append(i)
     else:
       masterValOutputs = masterValInputs
 
 
-    default = findMiddle(masterValOutputs)
+    default = self.findMiddle(masterValOutputs)
 
 
     for i, master in enumerate(font.masters):
@@ -192,7 +192,7 @@ class ExportDesignspace( object ):
 
     if distribute:
       for instanceVal in instanceValInputs:
-        i = affine(minWeightInput, maxWeightInput, minWeightOutput, maxWeightOutput, instanceVal)
+        i = self.affine(minWeightInput, maxWeightInput, minWeightOutput, maxWeightOutput, instanceVal)
         instanceValOutputs.append(i)
     else:
         instanceValOutputs = instanceValInputs

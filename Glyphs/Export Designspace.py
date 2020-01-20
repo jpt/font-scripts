@@ -192,26 +192,26 @@ class ExportDesignspace( object ):
         'default': default
     }
     template = """<?xml version='1.0' encoding='UTF-8'?>
-  <designspace format="3">
-    <axes>
-      <axis tag="wght" name="weight" minimum="{minWeightOutput}" maximum="{maxWeightOutput}" default="{default}">
-        <labelname xml:lang="en">Weight</labelname>
-  {maps}
-      </axis>
-    </axes>
-    <sources>
-  {sources}
-    </sources>
-    <instances>
-  {instances}
-    </instances>
-    <lib>
-      <dict>
-        <key>com.letterror.mathModelPref</key>
-        <string>{mathModel}</string>
-      </dict>
-    </lib>
-  </designspace>"""
+<designspace format="3">
+  <axes>
+    <axis tag="wght" name="weight" minimum="{minWeightOutput}" maximum="{maxWeightOutput}" default="{default}">
+      <labelname xml:lang="en">Weight</labelname>
+{maps}
+    </axis>
+  </axes>
+  <sources>
+{sources}
+  </sources>
+  <instances>
+{instances}
+  </instances>
+  <lib>
+    <dict>
+      <key>com.letterror.mathModelPref</key>
+      <string>{mathModel}</string>
+    </dict>
+  </lib>
+</designspace>"""
 
     template = template.format(**templateVals)
     return template

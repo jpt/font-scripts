@@ -80,11 +80,21 @@ class ExportDesignspace( object ):
     template = self.buildTemplate(self.w.interpolationRadio.get(), self.w.distributeCheck.get(), int(self.w.axisMin.get()), int(self.w.axisMax.get()), self.w.cssCheck.get())
     self.w.designSpaceText.set(template)
 
-  def currentUFOExportPath():
-    exportPath = Glyphs.defaults["UFOExportPathManual"]
-    if Glyphs.defaults["UFOPluginUseExportPath"]:
-      exportPath = Glyphs.defaults["UFOExportPath"]
+  def currentUFOExportPath(self):
+    exportPath = Glyphs.defaults["WebfontPluginExportPathManual"]
+    if Glyphs.defaults["WebfontPluginUseExportPath"]:
+      exportPath = Glyphs.defaults["WebfontPluginExportPath"]
     return exportPath
+    
+    #
+    # This should really export where the UFOs are, but Glyphs.defaults is mostly undocumented... 
+    # See https://github.com/mekkablue/Glyphs-Scripts/blob/master/Test/Webfont%20Test%20HTML.py
+    # Help, @mekkablue ! :D
+    #
+    # exportPath = Glyphs.defaults["UFOExportPathManual"]
+    # if Glyphs.defaults["UFOPluginUseExportPath"]:
+    #   exportPath = Glyphs.defaults["UFOExportPath"]
+    # return exportPath
 
   def exportDesignspace(self, sender):
     firstDoc = Glyphs.orderedDocuments()[0]
@@ -92,7 +102,7 @@ class ExportDesignspace( object ):
       exportPath = firstDoc.exportPath()
     else:
       thisFont = Glyphs.font # frontmost font
-      exportPath = currentUFOExportPath()
+      exportPath = self.currentUFOExportPath()
     content = self.w.designSpaceText.get()
     fileName = Glyphs.font.familyName + '.designspace'
     saveFileLocation = "%s/%s" % (exportPath,fileName)

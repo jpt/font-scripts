@@ -5,10 +5,7 @@ __doc__="""
 Exports a Designspace file. Proof of concept stage; currently only supports weight axis; mapping may be weird too. Assumes you do not use special layers.
 """
 
-from Foundation import *
-from AppKit import *
-import GlyphsApp, vanilla, os
-
+import GlyphsApp, vanilla
 
 class ExportDesignspace( object ):
   def __init__( self ):
@@ -59,6 +56,11 @@ class ExportDesignspace( object ):
     template = self.buildTemplate(self.w.interpolationRadio.get())
     self.w.designSpaceText.set(template)
 
+  def currentWebExportPath():
+    exportPath = Glyphs.defaults["WebfontPluginExportPathManual"]
+    if Glyphs.defaults["WebfontPluginUseExportPath"]:
+      exportPath = Glyphs.defaults["WebfontPluginExportPath"]
+    return exportPath
 
   def exportDesignspace(self, sender):
     firstDoc = Glyphs.orderedDocuments()[0]
@@ -76,11 +78,6 @@ class ExportDesignspace( object ):
     f.write( content )
     f.close()
     return True
-
-  def currentWebExportPath():
-    exportPath = Glyphs.defaults["DesignspaceExportPathManual"]
-    if Glyphs.defaults["DesignspaceExportPath"]:
-      exportPath = Glyphs.defaults["DesignspaceExportPath"]
 
 
   def affine(a,b,c,d,x): # minInput, maxInput, minOutput, maxOutput, x -- see https://math.stackexchange.com/q/377169

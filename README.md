@@ -1,6 +1,6 @@
 # Font Scripts
 
-Scripts/plugins for Glyphs and the UFO ecosystem
+Scripts/plugins for Glyphs and the UFO ecosystem. Some are useful, some are experimental.
 
 ## License
 

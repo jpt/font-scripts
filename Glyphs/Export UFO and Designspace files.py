@@ -47,8 +47,6 @@ for i, axis in enumerate(font.axes):
     try:
         axisMap = font.customParameters["Axis Mappings"][axis.axisTag]
     except:
-        axisMap = None
-    if axisMap is None:
         continue
   
     a = AxisDescriptor()

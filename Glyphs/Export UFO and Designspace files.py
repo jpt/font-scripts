@@ -26,51 +26,39 @@ for i, master in enumerate(font.masters):
     ufoFolder = os.path.join(folderName, 'ufo')
     ufoFileName = fileName.replace('.glyphs', '.ufo')
     ufoFilePath = os.path.join(ufoFolder, ufoFileName)
-
     s.path = ufoFilePath
     s.name = "master%s.%s" % (i, master.name.lower().replace(" ", "_"))
     locations = {}
-
     for x, axis in enumerate(master.axes):
         locations[font.axes[x].name] = axis
-
     s.location = locations
     doc.addSource(s)
-
     if not os.path.exists(ufoFolder):
         os.mkdir(ufoFolder)
-
     exporter.writeUfo_toURL_error_(
         master, NSURL.fileURLWithPath_(ufoFilePath), None)
 
 for i, axis in enumerate(font.axes):
     try:
         axisMap = font.customParameters["Axis Mappings"][axis.axisTag]
-    except:
+    except:    	
         continue
-  
     a = AxisDescriptor()
     axisMin = None
     axisMax = None
-
     for k in sorted(axisMap.keys()):
         a.map.append((axisMap[k], k))
-        if axisMin is None:
+        if axisMin is None or axisMap[k] < axisMin:
             axisMin = axisMap[k]
-        if axisMax is None:
-            axisMax = axisMap[k]
-        if axisMap[k] < axisMin:
-            axisMin = axisMap[k]
-        if axisMap[k] > axisMax:
-            axisMax = axisMap[k]
-
+        if axisMax is None or axisMap[k] > axisMax:
+            axisMax = axisMap[k]            
     a.maximum = axisMax
     a.minimum = axisMin
     a.default = axisMin
     a.name = axis.name
     a.tag = axis.axisTag
     doc.addAxis(a)
-
+    
 for instance in font.instances:
     if not instance.active:
         continue
@@ -89,7 +77,6 @@ for instance in font.instances:
         axisName = {}
         axisName[font.axes[i].name] = axisValue
         ins.location = axisName
-
     doc.addInstance(ins)
 
 designspaceFilePath = ufoFolder + "/" + fontName + ".designspace"

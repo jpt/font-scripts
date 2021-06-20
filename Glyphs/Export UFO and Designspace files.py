@@ -48,28 +48,30 @@ for i, axis in enumerate(font.axes):
         axisMap = font.customParameters["Axis Mappings"][axis.axisTag]
     except:
         axisMap = None
-    if(axisMap is not None):
-        a = AxisDescriptor()
-        axisMin = None
-        axisMax = None
+    if axisMap is None:
+        continue
+  
+    a = AxisDescriptor()
+    axisMin = None
+    axisMax = None
 
-        for k in sorted(axisMap.keys()):
-            a.map.append((axisMap[k], k))
-            if axisMin is None:
-                axisMin = axisMap[k]
-            if axisMax is None:
-                axisMax = axisMap[k]
-            if axisMap[k] < axisMin:
-                axisMin = axisMap[k]
-            if axisMap[k] > axisMax:
-                axisMax = axisMap[k]
+    for k in sorted(axisMap.keys()):
+        a.map.append((axisMap[k], k))
+        if axisMin is None:
+            axisMin = axisMap[k]
+        if axisMax is None:
+            axisMax = axisMap[k]
+        if axisMap[k] < axisMin:
+            axisMin = axisMap[k]
+        if axisMap[k] > axisMax:
+            axisMax = axisMap[k]
 
-        a.maximum = axisMax
-        a.minimum = axisMin
-        a.default = axisMin
-        a.name = axis.name
-        a.tag = axis.axisTag
-        doc.addAxis(a)
+    a.maximum = axisMax
+    a.minimum = axisMin
+    a.default = axisMin
+    a.name = axis.name
+    a.tag = axis.axisTag
+    doc.addAxis(a)
 
 for instance in font.instances:
     if not instance.active:

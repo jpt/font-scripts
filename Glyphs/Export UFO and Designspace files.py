@@ -3,8 +3,8 @@ __doc__ = """
 Export UFO and designspace files
 """
 
-import re
 import os.path
+from re import findall
 from fontTools.designspaceLib import (
     DesignSpaceDocument, AxisDescriptor, SourceDescriptor, InstanceDescriptor)
 
@@ -12,11 +12,13 @@ doc = DesignSpaceDocument()
 exporter = NSClassFromString('GlyphsFileFormatUFO').alloc().init()
 font = Glyphs.font
 
+# Update auto features 
 for feature in font.features:
     if feature.automatic:
         feature.update()
 
 # Add Sources (Masters) to designspace, and export UFOs while we're at it
+# Thanks to https://robofont.com/documentation/how-tos/converting-from-glyphs-to-ufo/ for inspiration
 for i, master in enumerate(font.masters):
     s = SourceDescriptor()
     exporter.setFontMaster_(master)
@@ -41,13 +43,12 @@ for i, master in enumerate(font.masters):
         master, NSURL.fileURLWithPath_(ufoFilePath), None)
 
 # Add Glyphs intermediate masters, formerly known as brace layers (these are called support layers in Skateboard)
-# TODO: add option to generate ufo with separate glyphs
+# todo: add option to generate ufo with separate glyphs
 axisMatches = []
 for glyph in font.glyphs:
     for layer in glyph.layers:
         if layer.isSpecialLayer:
-            axes = re.findall("(\d+)\s*,*", layer.name)
-            for i, axis in enumerate(axes):
+            for i, axis in enumerate(findall("(\d+)\s*,*", layer.name)):
                 masterName = font.masters[layer.associatedMasterId].name
                 name = "%s %s %s" % (font.familyName, masterName, layer.name)
                 axisName = font.axes[i].name
@@ -70,14 +71,12 @@ for i, support in enumerate(axisMatches):
     sp.layerName = support['layerName']
     sp.name = support['name']
     exists = False
-    index = None
     for i, source in enumerate(doc.sources):
         if support['name'] == source.name:
             exists = True
-            index = i
             break
     if exists == True:
-        doc.sources[index].location[support['axisName']] = float(support['coord'])
+        doc.sources[i].location[support['axisName']] = float(support['coord'])
     else:
         sp.location = location
         doc.addSource(sp)
@@ -104,27 +103,29 @@ for i, axis in enumerate(font.axes):
     a.tag = axis.axisTag
     doc.addAxis(a)
 
-# Add axis maps if defined in Glyphs (Font Info...->Font->Custom Parameters->Axis Mappings)
+# Add instances (now also known as Exports: Font Info...->Exports)
 for instance in font.instances:
     if not instance.active:
         continue
     ins = InstanceDescriptor()
-    m = re.match("(.*)-(.*)$", instance.fontName)
-    postScriptName = m.group(0)
-    familyName = m.group(1)
-    ins.styleName = m.group(2)
-    ins.familyName = instance.familyName
-    ins.filename = postScriptName + ".ufo"
+    postScriptName = instance.fontName
+    if instance.isBold:
+        styleMapStyle = "bold"
+    elif instance.isItalic:
+        styleMapStyle = "italic"
+    else:
+        styleMapStyle = "regular"
+    ins.familyName = instance.preferredFamily
+    ins.filename = "%s.ufo" % postScriptName
     ins.postScriptFontName = postScriptName
-    ins.styleMapFamilyName = familyName + m.group(2)
-    ins.styleMapStyleName = m.group(2).lower()
-
+    ins.styleMapFamilyName = "%s %s" % (ins.familyName, instance.name)
+    ins.styleMapStyleName = styleMapStyle
     for i, axisValue in enumerate(instance.axes):
         axisName = {}
         axisName[font.axes[i].name] = axisValue
         ins.location = axisName
     doc.addInstance(ins)
 
-designspaceFilePath = ufoFolder + "/" + fontName + ".designspace"
+designspaceFilePath = "%s/%s.designspace" % (ufoFolder, fontName)
 doc.write(designspaceFilePath)
 os.system("open %s" % ufoFolder)

@@ -77,7 +77,7 @@ for i, support in enumerate(axisMatches):
     sp.layerName = support['layerName']
     sp.name = support['name']
     exists = False
-    for i, source in enumerate(doc.sources):
+    for source in doc.sources:
         if support['name'] == source.name:
             exists = True
             break

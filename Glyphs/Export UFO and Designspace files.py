@@ -18,7 +18,8 @@ for feature in font.features:
         feature.update()
 
 # Add Sources (Masters) to designspace, and export UFOs while we're at it
-# Thanks to https://robofont.com/documentation/how-tos/converting-from-glyphs-to-ufo/ for inspiration
+# Thanks to https://robofont.com/documentation/how-tos/converting-from-glyphs-to-ufo/ for export inspiration
+# I wonder if GSMaster will ever get a generate() method like GSInstance...
 for i, master in enumerate(font.masters):
     s = SourceDescriptor()
     exporter.setFontMaster_(master)

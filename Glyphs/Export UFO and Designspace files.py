@@ -6,7 +6,7 @@ Export UFO and designspace files. Supports axis mappings and brace layers.
 import os.path
 from re import findall, match
 from fontTools.designspaceLib import (
-    DesignSpaceDocument, AxisDescriptor, SourceDescriptor, InstanceDescriptor)
+    DesignSpaceDocument, AxisDescriptor, SourceDescriptor, InstanceDescriptor, RuleDescriptor)
 
 doc = DesignSpaceDocument()
 exporter = NSClassFromString('GlyphsFileFormatUFO').alloc().init()
@@ -63,7 +63,12 @@ for glyph in font.glyphs:
                 axisName = font.axes[i].name
                 supportLayer = dict(name=name, layerName=layer.name,
                                     axisName=axisName, master=masterName, coord=axis)
-                if supportLayer not in axisMatches:
+                exists = False
+                for unique in axisMatches:
+                    if unique['axisName'] == supportLayer['axisName'] and unique['coord'] == supportLayer['coord']:
+                        exists = True
+                        break
+                if not exists:
                     axisMatches.append(supportLayer)
 
 for i, support in enumerate(axisMatches):

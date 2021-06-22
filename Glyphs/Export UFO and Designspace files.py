@@ -36,6 +36,11 @@ for i, master in enumerate(font.masters):
     for x, axis in enumerate(master.axes):
         locations[font.axes[x].name] = axis
     s.location = locations
+    if i == 0:
+        s.copyLib = True
+        s.copyFeatures = True
+        s.copyGroups = True
+        s.copyInfo = True
     doc.addSource(s)
 
     if not os.path.exists(ufoFolder):

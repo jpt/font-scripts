@@ -99,6 +99,10 @@ for i, axis in enumerate(font.axes):
     a.maximum = axisMax
     a.minimum = axisMin
     a.default = axisMin
+    # Could do something like this, but defaults should really be
+    # defined by user: question is where
+    # if axis.axisTag == "wght" and axisMin < 400 and axisMax > 400:
+    #     a.default = 400
     a.name = axis.name
     a.tag = axis.axisTag
     doc.addAxis(a)

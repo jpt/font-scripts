@@ -4,7 +4,7 @@ Export UFO and designspace files. Supports axis mappings and brace layers.
 """
 
 import os.path
-from re import findall
+from re import findall, match
 from fontTools.designspaceLib import (
     DesignSpaceDocument, AxisDescriptor, SourceDescriptor, InstanceDescriptor)
 
@@ -54,6 +54,9 @@ axisMatches = []
 for glyph in font.glyphs:
     for layer in glyph.layers:
         if layer.isSpecialLayer:
+            # Ignore alternate layers for now
+            if(match(".*\[.*\].*",layer.name)):
+                continue
             for i, axis in enumerate(findall("(\d+)\s*,*", layer.name)):
                 masterName = font.masters[layer.associatedMasterId].name
                 name = "%s %s %s" % (font.familyName, masterName, layer.name)
@@ -77,12 +80,12 @@ for i, support in enumerate(axisMatches):
     sp.layerName = support['layerName']
     sp.name = support['name']
     exists = False
-    for source in doc.sources:
+    for x,source in enumerate(doc.sources):
         if support['name'] == source.name:
             exists = True
             break
     if exists == True:
-        doc.sources[i].location[support['axisName']] = float(support['coord'])
+        doc.sources[x].location[support['axisName']] = float(support['coord'])
     else:
         sp.location = location
         doc.addSource(sp)

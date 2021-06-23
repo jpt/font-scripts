@@ -48,15 +48,53 @@ for i, master in enumerate(font.masters):
     exporter.writeUfo_toURL_error_(
         master, NSURL.fileURLWithPath_(ufoFilePath), None)
 
+def getBoundsByTag(tag):
+    min = None
+    max = None
+    for i,axis in enumerate(font.axes):
+        if axis.axisTag != tag:
+            continue
+        for master in font.masters:
+           coord = master.axes[i]
+           if min == None or coord < min:
+               min = coord
+           if max == None or coord > max:
+               max = coord
+    return [min,max]
+
 # Add Glyphs intermediate masters, formerly known as brace layers (these are called support layers in Skateboard)
-# todo: add option to generate ufo with separate glyphs
+# as well as alternate (formerly "bracket") layers
 axisMatches = []
 for glyph in font.glyphs:
     for layer in glyph.layers:
         if layer.isSpecialLayer:
-            # Ignore alternate layers for now
-            if(match(".*\[.*\].*",layer.name)):
-                continue
+            # Alternate layers (subs) (WIP) - this is totally wrong lol. 
+            # Should use conditionsets based on other metadata
+            # if(match(".*\[.*\].*",layer.name)):
+            #     for masterName, left, axisShortName, right in findall("\W*([\w\s\d]+)\s\[(\d*)\W*([\w]+)\W*(\d*)\]\W*",layer.name):
+            #         # Are these documented anywhere?
+            #         if axisShortName == "wg":
+            #             axisTag = "wght"
+            #             axisName = "Weight"
+            #         elif axisShortName == "oz":
+            #             axisTag = "opsz"
+            #             axisName = "Optical size"
+
+            #         [min,max] = getBoundsByTag(axisTag)
+            #         if left != '':
+            #             min = float(left)
+            #         if right != '':
+            #             max = float(right)
+            #         r = RuleDescriptor()
+            #         r.name = layer.name
+
+            #         r.conditionSets.append([dict(name=axisName,minimum=min,maximum=max)])
+            #         doc.addRule(r)
+            #
+            # Skateboard support layers (is this a Skateboard concept or spec?) Is this even right if it is?
+            # Also I don't think this does what I think it does
+            # I think for alternate layers I need instanceLocation on glyphs? https://fonttools.readthedocs.io/en/latest/designspaceLib/scripting.html#option-add-glyph-specific-masters
+
             for i, axis in enumerate(findall("(\d+)\s*,*", layer.name)):
                 masterName = font.masters[layer.associatedMasterId].name
                 name = "%s %s %s" % (font.familyName, masterName, layer.name)
@@ -113,10 +151,6 @@ for i, axis in enumerate(font.axes):
     a.maximum = axisMax
     a.minimum = axisMin
     a.default = axisMin
-    # Could do something like this, but defaults should really be
-    # defined by user: question is where
-    # if axis.axisTag == "wght" and axisMin < 400 and axisMax > 400:
-    #     a.default = 400
     a.name = axis.name
     a.tag = axis.axisTag
     doc.addAxis(a)
@@ -134,6 +168,7 @@ for instance in font.instances:
     else:
         styleMapStyle = "regular"
     ins.familyName = instance.preferredFamily
+    ins.styleName = instance.name
     ins.filename = "%s.ufo" % postScriptName
     ins.postScriptFontName = postScriptName
     ins.styleMapFamilyName = "%s %s" % (ins.familyName, instance.name)

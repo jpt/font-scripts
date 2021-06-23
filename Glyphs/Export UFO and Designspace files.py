@@ -91,8 +91,8 @@ for glyph in font.glyphs:
             #         r.conditionSets.append([dict(name=axisName,minimum=min,maximum=max)])
             #         doc.addRule(r)
             #
-            # Skateboard support layers (is this a Skateboard concept or spec?) Is this even right if it is?
-            # Also I don't think this does what I think it does
+            # Skateboard support layers (brace layers) (is a "support" a Skateboard concept or spec?) Is this even right way to do it if it is?
+            # Cause I dont think this does what I think it does
             # I think for alternate layers I need instanceLocation on glyphs? https://fonttools.readthedocs.io/en/latest/designspaceLib/scripting.html#option-add-glyph-specific-masters
 
             for i, axis in enumerate(findall("(\d+)\s*,*", layer.name)):

@@ -68,8 +68,11 @@ axisMatches = []
 for glyph in font.glyphs:
     for layer in glyph.layers:
         if layer.isSpecialLayer:
-            # Alternate layers (subs) (WIP) - this is totally wrong lol. 
-            # Should use conditionsets based on other metadata
+            # Todo: Alternate layers (WIP)
+            #
+            #  Need to create glyphs to export in order to use rules.
+            #  Should also check for customParameters["Replace glyphs"]
+            #
             # if(match(".*\[.*\].*",layer.name)):
             #     for masterName, left, axisShortName, right in findall("\W*([\w\s\d]+)\s\[(\d*)\W*([\w]+)\W*(\d*)\]\W*",layer.name):
             #         # Are these documented anywhere?
@@ -79,7 +82,6 @@ for glyph in font.glyphs:
             #         elif axisShortName == "oz":
             #             axisTag = "opsz"
             #             axisName = "Optical size"
-
             #         [min,max] = getBoundsByTag(axisTag)
             #         if left != '':
             #             min = float(left)
@@ -87,32 +89,35 @@ for glyph in font.glyphs:
             #             max = float(right)
             #         r = RuleDescriptor()
             #         r.name = layer.name
-
             #         r.conditionSets.append([dict(name=axisName,minimum=min,maximum=max)])
             #         doc.addRule(r)
             #
-            # Skateboard support layers (brace layers) (is a "support" a Skateboard concept or spec?) Is this even right way to do it if it is?
-            # Cause I dont think this does what I think it does
-            # I think for alternate layers I need instanceLocation on glyphs? https://fonttools.readthedocs.io/en/latest/designspaceLib/scripting.html#option-add-glyph-specific-masters
-
-            for i, axis in enumerate(findall("(\d+)\s*,*", layer.name)):
+            # Intermediate layers (support layers)
+            for i, axis in enumerate(findall("\{(\d+)\s*,*\}", layer.name)):
                 masterName = font.masters[layer.associatedMasterId].name
                 name = "%s %s %s" % (font.familyName, masterName, layer.name)
                 axisName = font.axes[i].name
                 supportLayer = dict(name=name, layerName=layer.name,
                                     axisName=axisName, master=masterName, coord=axis)
                 exists = False
-                for unique in axisMatches:
-                    if unique['axisName'] == supportLayer['axisName'] and unique['coord'] == supportLayer['coord']:
+                for axisRep in axisMatches:
+                    if supportLayer['coord'] == axisRep['coord'] and supportLayer['axisName'] == axisRep['axisName']:
                         exists = True
+                        # If there are two support layers on different masters, reconcile
+                        # Todo: ask for user input on which master to keep them in
+                        if(supportLayer['master'] != axisRep['master']):
+                            # supportLayer['master'] = axisRep['master']
+                            for master in font.masters:
+                                if master.name == axisRep['master']:
+                                    layer.associatedMasterId = master.id
                         break
                 if not exists:
                     axisMatches.append(supportLayer)
-
+         
 for i, support in enumerate(axisMatches):
     sp = SourceDescriptor()
     fontName = font.fontName
-    fileName = "%s - %s.glyphs" % (fontName, support['master'])
+    fileName = "%s - %s.ufo" % (fontName, support['master'])
     folderName = os.path.dirname(filePath)
     ufoFolder = os.path.join(folderName, 'ufo')
     ufoFileName = fileName.replace('.glyphs', '.ufo')

@@ -6,7 +6,7 @@ Glyphs 2 scripts are no longer maintained, in favor of Glyphs 3. I'm adding new 
 
 ## License
 
-The Family Steps Interpolator uses bits of [Linus Romer's steminterpolator]( https://github.com/linusromer/steminterpolation), so it also carries the GNU GPLv3 license, unfortunately. 
+The Family Steps Interpolator uses bits of [Linus Romer's steminterpolator]( https://github.com/linusromer/steminterpolation), so it also carries the GPLv3 license. 
 
 Font tools [developed for the "Barlow" family](https://github.com/jpt/barlow/tree/master/tools) and mirrored here are licensed under the [SIL Open Font License (OFL) v1.1](https://scripts.sil.org/cms/scripts/page.php?item_id=OFL_web) where applicable, and the [Apache License 2](http://www.apache.org/licenses/LICENSE-2.0) where, for whatever bizarre and/or convenient reason, the OFL is inapplicable.
 

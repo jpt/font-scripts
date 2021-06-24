@@ -91,8 +91,12 @@ for glyph in font.glyphs:
             #         r.name = layer.name
             #         r.conditionSets.append([dict(name=axisName,minimum=min,maximum=max)])
             #         doc.addRule(r)
-            #
+
+
             # Intermediate layers (support layers)
+            # Todo: give user option not to use support layers and instead
+            # generate a separate UFO with those glyphs as a source on
+            # the right axis locations
             for i, axis in enumerate(findall("\{(\d+)\s*,*\}", layer.name)):
                 masterName = font.masters[layer.associatedMasterId].name
                 name = "%s %s %s" % (font.familyName, masterName, layer.name)
@@ -106,7 +110,6 @@ for glyph in font.glyphs:
                         # If there are two support layers on different masters, reconcile
                         # Todo: ask for user input on which master to keep them in
                         if(supportLayer['master'] != axisRep['master']):
-                            # supportLayer['master'] = axisRep['master']
                             for master in font.masters:
                                 if master.name == axisRep['master']:
                                     layer.associatedMasterId = master.id

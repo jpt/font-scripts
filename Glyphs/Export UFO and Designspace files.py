@@ -1,4 +1,4 @@
-# MenuTitle: Export UFO and Designspace files (Beta)
+# MenuTitle: Export UFO and Designspace files
 __doc__ = """
 Export UFO and designspace files. Supports axis mappings and brace layers.  
 """

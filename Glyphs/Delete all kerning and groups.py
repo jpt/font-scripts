@@ -7,22 +7,26 @@ Delete all kerning and groups across all masters
 Font = Glyphs.font
 gc = 0
 
-def deleteGroup(direction):
+def deleteLog(direction):
+    global gc
     gc += 1
     print("Deleting %s kerning group for glyph: %s" % (direction, glyph.name))
-    glyph[direction + "KerningGroup"] = None
 
 for glyph in Font.glyphs:
     for layer in glyph.layers:
         if glyph.rightKerningGroup:
-            deleteGroup("right")
+            glyph.rightKerningGroup = None
+            deleteLog("right")
         if glyph.leftKerningGroup:
-            deleteGroup("left")
+            glyph.leftKerningGroup = None
+            deleteLog("left")
         if glyph.topKerningGroup:
-            deleteGroup("top")
+            glyph.topKerningGroup = None
+            deleteLog("top")
         if glyph.bottomKerningGroup:
-            deleteGroup("bottom")
-
+            glyph.bottomKerningGroup = None
+            deleteLog("bottom")
+           
 Font.kerning = {}
 Font.kerningRTL = {}
 Font.kerningVertical = {}

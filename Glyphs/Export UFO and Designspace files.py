@@ -8,10 +8,6 @@ from re import findall, match
 from fontTools.designspaceLib import (
     DesignSpaceDocument, AxisDescriptor, SourceDescriptor, InstanceDescriptor, RuleDescriptor)
 
-doc = DesignSpaceDocument()
-exporter = NSClassFromString('GlyphsFileFormatUFO').alloc().init()
-font = Glyphs.font
-
 def getBoundsByTag(tag):
     min = None
     max = None
@@ -196,6 +192,11 @@ def addInstances(doc, font):
         doc.addInstance(ins)
 
 def main():
+    
+    doc = DesignSpaceDocument()
+    exporter = NSClassFromString('GlyphsFileFormatUFO').alloc().init()
+    font = Glyphs.font
+
     updateFeatures(font)
     filePath = exportUFOAndBuildDesignspace(doc, exporter, font)
     axisMatches = findAndCorrectSpecialLayers(font)

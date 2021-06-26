@@ -30,8 +30,8 @@ def updateFeatures(font):
 
 def exportUFOAndBuildDesignspace(doc, exporter, font):
     # Add Sources (Masters) to designspace, and export UFOs while we're at it
-# Thanks to https://robofont.com/documentation/how-tos/converting-from-glyphs-to-ufo/ for export inspiration
-# I wonder if GSMaster will ever get a generate() method like GSInstance...
+    # Thanks to https://robofont.com/documentation/how-tos/converting-from-glyphs-to-ufo/ for export inspiration
+    # I wonder if GSMaster will ever get a generate() method like GSInstance...
     for i, master in enumerate(font.masters):
         s = SourceDescriptor()
         exporter.setFontMaster_(master)
@@ -96,7 +96,8 @@ def findAndCorrectSpecialLayers(font):
             # Todo: give user option not to use support layers and instead
             # generate a separate UFO with those glyphs as a source on
             # the right axis locations
-                for i, axis in enumerate(findall("\{(\d+)\s*,*\}", layer.name)):
+                for i, axis in enumerate(findall("(\d+)", layer.name)):
+                    print("one")
                     masterName = font.masters[layer.associatedMasterId].name
                     name = "%s %s %s" % (font.familyName, masterName, layer.name)
                     axisName = font.axes[i].name
@@ -192,7 +193,6 @@ def addInstances(doc, font):
         doc.addInstance(ins)
 
 def main():
-    
     doc = DesignSpaceDocument()
     exporter = NSClassFromString('GlyphsFileFormatUFO').alloc().init()
     font = Glyphs.font

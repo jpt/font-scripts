@@ -1,13 +1,13 @@
-#MenuTitle: Reinterpolate itermediate master (brace layer) sidebearings 
+#MenuTitle: Reinterpolate special layer sidebearings
 # -*- coding: utf-8 -*-
 
 __doc__="""
-Re-interpolate sidebearings of intermediate master layers (formerly known as brace layers)
+Re-interpolate special layer sidebearings (intermediate and alternate layers, a.k.a. brace and bracket layers)
 """
 
 font = Glyphs.font
 
 for glyph in font.glyphs:
 	for layer in glyph.layers:
-		if layer.isSpecialLayer and layer.name.startswith("{"):
+		if layer.isSpecialLayer:
 			layer.reinterpolateMetrics()

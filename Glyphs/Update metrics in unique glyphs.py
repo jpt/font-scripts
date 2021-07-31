@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 __doc__="""
-Updates horizontal metrics in unique glyphs only. Re-interpolates sidebearings of all intermediate masters. Unique, in this script, means the glyph name does not end with "comb," and the glyph is not made up of only auto-aligned components.
+Updates horizontal metrics in unique glyphs only. Re-interpolates sidebearings of all intermediate masters. Unique, in this script, means the glyph is not made up of only auto-aligned components. It also avoids glyph names that end with "comb," because that's just asking for trouble :) 
 """
 
 font = Glyphs.font

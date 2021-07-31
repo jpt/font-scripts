@@ -1,8 +1,8 @@
-#MenuTitle: Update unique horizontal metrics
+#MenuTitle: Update metrics in unique glyphs
 # -*- coding: utf-8 -*-
 
 __doc__="""
-Updates unique horizontal metrics. Unique, in this script, means the glyph catgory is not "Separator," the glyph name does not end with "comb" or ".tf", and the glyph is not made up of only auto-aligned components.
+Updates horizontal metrics in unique glyphs only. Re-interpolates sidebearings of all intermediate masters. Unique, in this script, means the glyph catgory is not "Separator," the glyph name does not end with "comb" or ".tf", and the glyph is not made up of only auto-aligned components.
 """
 
 font = Glyphs.font
@@ -25,12 +25,13 @@ for glyph in font.glyphs:
 			print("Updating %s" % glyph.name)
 			uniques.append(glyph)
 
-for glyph in uniques:
+# re-interpolate sidebearings on all special layers
+for glyph in font.glyphs:
 	for layer in glyph.layers:
 		if layer.isSpecialLayer:
 			layer.reinterpolateMetrics()
-		layer.syncMetrics()
-# have to sync twice sometimes (not sure why)
+			layer.syncMetrics()
+# sync metrics on all uniques
 for glyph in uniques:
 	for layer in glyph.layers:
 		layer.syncMetrics()

@@ -2,7 +2,7 @@
 
 Scripts/plugins for various font ecosystems. Temporarily limited to Glyphs.
 
-Glyphs 2 scripts are no longer maintained, in favor of Glyphs 3. I'm adding new Glyphs 3 scripts as I create them. 
+Glyphs 2 scripts have been deleted as they are not maintained. You can still [access them in git history](https://github.com/jpt/font-scripts/tree/d27490b3c5ae165ae3451f593ae7bd42cd0b728a/Glyphs/Glyphs%202) if you need them.
 
 ## License
 

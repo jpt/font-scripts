@@ -21,7 +21,7 @@ for glyph in font.glyphs:
 						autoAlignedComponents += 1
 		if(componentCount > 0 and componentCount == autoAlignedComponents):
 			autoAligned = True
-		if not name.endswith("comb") and autoAligned is False and glyph.export == True:
+		if not glyph.name.endswith("comb") and autoAligned is False and glyph.export == True:
 			print("Updating %s" % glyph.name)
 			uniques.append(glyph)
 

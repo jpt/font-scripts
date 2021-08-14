@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 __doc__="""
-Adds entry and exit anchors to En-cy, El-cy, en-cy, el-cy, Softsign-cy, and softsign-cy to generate Lje-cy, Nje-cy, lje-cy, and nje-cy
+Adds entry and exit anchors to En-cy, El-cy, en-cy, el-cy, Softsign-cy, softsign-cy, and Ge-cy to generate Lje-cy, Nje-cy, lje-cy, nje-cy, and EnGe-cy.
 """
 
 font = Glyphs.font

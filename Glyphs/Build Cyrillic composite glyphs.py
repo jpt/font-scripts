@@ -8,9 +8,9 @@ Adds entry and exit anchors to En-cy, El-cy, en-cy, el-cy, Softsign-cy, and soft
 font = Glyphs.font
 
 exit_glyphs = ["En-cy", "El-cy", "en-cy", "el-cy"]
-entry_glyphs = ["Softsign-cy", "softsign-cy"]
+entry_glyphs = ["Softsign-cy", "softsign-cy","Ge-cy"]
 all_glyphs = exit_glyphs + entry_glyphs
-to_generate = ["Lje-cy", "Nje-cy", "lje-cy", "nje-cy"]
+to_generate = ["Lje-cy", "Nje-cy", "lje-cy", "nje-cy","EnGe-cy"]
 
 measure_at = 0.85 # this will differ by font, YMMV — this is a percentage of the cap height or x-height's x coordinate at which to measure stem width
 
@@ -52,6 +52,8 @@ for glyph_name in to_generate:
 				components = [GSComponent(font.glyphs["el-cy"]),GSComponent(font.glyphs["softsign-cy"])]
 			elif glyph_name == "nje-cy":
 				components = [GSComponent(font.glyphs["en-cy"]),GSComponent(font.glyphs["softsign-cy"])]
+			elif glyph_name == "EnGe-cy":
+				components = [GSComponent(font.glyphs["En-cy"]),GSComponent(font.glyphs["Ge-cy"])]
 			for component in components:
 				layer.components.append(component)
 		print("Created %s!" % glyph_name)

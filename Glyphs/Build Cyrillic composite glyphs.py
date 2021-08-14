@@ -2,17 +2,18 @@
 # -*- coding: utf-8 -*-
 
 __doc__="""
-Adds entry and exit anchors to En-cy, El-cy, en-cy, el-cy, Softsign-cy, softsign-cy, and Ge-cy to generate Lje-cy, Nje-cy, lje-cy, nje-cy, and EnGe-cy.
+Adds entry and exit anchors to En-cy, El-cy, en-cy, el-cy, Softsign-cy, softsign-cy, Ge-cy, and ge-cy to generate Lje-cy, Nje-cy, lje-cy, nje-cy, EnGe-cy, and enge-cy.
 """
 
 font = Glyphs.font
 
 exit_glyphs = ["En-cy", "El-cy", "en-cy", "el-cy"]
-entry_glyphs = ["Softsign-cy", "softsign-cy","Ge-cy"]
+entry_glyphs = ["Softsign-cy", "softsign-cy","Ge-cy","ge-cy"]
 all_glyphs = exit_glyphs + entry_glyphs
-to_generate = ["Lje-cy", "Nje-cy", "lje-cy", "nje-cy","EnGe-cy"]
+to_generate = ["Lje-cy", "Nje-cy", "lje-cy", "nje-cy","EnGe-cy", "enge-cy"]
 
-measure_at = 0.85 # this will differ by font, YMMV — this is a percentage of the cap height or x-height's x coordinate at which to measure stem width
+measure_at = 0.8 # this will differ by font, YMMV — this is a percentage of the cap height or x-height's x coordinate at which to measure stem width
+measure_at_enge = 0.5 # maybe the todo here is measuring a single path so there are no outliers like this?
 
 for glyph_name in all_glyphs:
 	glyph = font.glyphs[glyph_name]
@@ -22,7 +23,10 @@ for glyph_name in all_glyphs:
 			measure_point = layer.master.capHeight * measure_at
 		else:
 			y = layer.master.xHeight / 2
-			measure_point = layer.master.xHeight * measure_at
+			if(glyph_name == "ge-cy"): 
+				measure_point = layer.master.xHeight * measure_at_enge
+			else:
+				measure_point = layer.master.xHeight * measure_at
 		start = -1
 		stop = layer.width
 		measuring_layer = layer.copyDecomposedLayer()
@@ -54,6 +58,8 @@ for glyph_name in to_generate:
 				components = [GSComponent(font.glyphs["en-cy"]),GSComponent(font.glyphs["softsign-cy"])]
 			elif glyph_name == "EnGe-cy":
 				components = [GSComponent(font.glyphs["En-cy"]),GSComponent(font.glyphs["Ge-cy"])]
+			elif glyph_name == "enge-cy":
+				components = [GSComponent(font.glyphs["en-cy"]),GSComponent(font.glyphs["ge-cy"])]
 			for component in components:
 				layer.components.append(component)
 		print("Created %s!" % glyph_name)

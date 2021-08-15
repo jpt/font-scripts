@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 __doc__="""
-Horizontally centers selected paths, and components that aren't auto-aligned. You might find this helpful for things like the dot on an exclamation point, the strokes on the yen symbol, etc.
+Horizontally centers selected paths and components. You might find this helpful for things like the dot on an exclamation point, the strokes on the yen symbol, etc.
 """
 
 font = Glyphs.font
@@ -12,7 +12,7 @@ for path in font.selectedLayers[0].paths:
 	if path.selected:
 		selected_paths.append(path)
 for component in font.selectedLayers[0].components:
-	if component.selected and not component.automaticAlignment:
+	if component.selected:
 		selected_paths.append(component)
 if selected_paths:
 	width = font.selectedLayers[0].width

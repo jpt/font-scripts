@@ -21,3 +21,4 @@ for i in range(0,10):
 				Font.glyphs[right].rightKerningGroup = None
 			if Font.glyphs[right].leftKerningGroup:
 				Font.glyphs[right].leftKerningGroup = None
+            Font.removeKerningForPair(master.id,left,right)

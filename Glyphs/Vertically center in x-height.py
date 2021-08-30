@@ -1,4 +1,4 @@
-#MenuTitle: Verically center in x-height
+#MenuTitle: Vertically center in x-height
 # -*- coding: utf-8 -*-
 
 __doc__="""

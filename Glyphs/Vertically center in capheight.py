@@ -1,4 +1,4 @@
-#MenuTitle: Verically center in capheight
+#MenuTitle: Vertically center in capheight
 # -*- coding: utf-8 -*-
 
 __doc__="""

@@ -18,7 +18,6 @@ hyphen_factor = 1.1
 hyphen_thick_factor = 0.9
 contrast_factor = 0.95
 multiply_factor = 1.01
-equal_factor = 1.3
 
 for layer in font.glyphs['zero.tf'].layers:
 	if layer.isMasterLayer:

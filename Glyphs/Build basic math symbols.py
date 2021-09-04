@@ -13,6 +13,7 @@ font = Glyphs.font
 master_contrast = []
 zero_width = []
 hyphen_lsb = []
+n_distance = []
 hyphen_factor = 1.1
 hyphen_thick_factor = 0.9
 contrast_factor = 0.95
@@ -22,6 +23,14 @@ equal_factor = 1.3
 for layer in font.glyphs['zero.tf'].layers:
 	if layer.isMasterLayer:
 		zero_width.append(layer.width)
+
+for layer in font.glyphs['n'].layers:
+	if layer.isMasterLayer:
+		measure_y = layer.master.xHeight/3
+		start = 0
+		stop = layer.width
+		intersections = layer.intersectionsBetweenPoints((start, measure_y), (stop, measure_y))
+		n_distance.append(intersections[1].x + (stop-intersections[-2].x))
 
 for layer in font.glyphs['hyphen'].layers:
 	if layer.isMasterLayer:
@@ -96,15 +105,15 @@ if not font.glyphs['plus']:
 if not font.glyphs['equal']:
 	glyph = GSGlyph('equal')
 	font.glyphs.append(glyph)
-	for i, layer in enumerate(glyph.layers):
+	for i,layer in enumerate(glyph.layers):
 		minusLayerBounds = font.glyphs['minus'].layers[i].bounds
 		equal_height = minusLayerBounds.size.height
 		layer.width = zero_width[i]
-		
-		y_offset = equal_height * equal_factor
+		y_offset = (equal_height/2) + (n_distance[i]/2)
+
 		top_equal = GSComponent('minus', (0, y_offset))
 		layer.components.append(top_equal)
-		
+
 		bottom_equal = GSComponent('minus', (0, -y_offset))
 		layer.components.append(bottom_equal)
 

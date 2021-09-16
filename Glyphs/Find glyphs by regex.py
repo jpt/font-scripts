@@ -43,7 +43,6 @@ class FindAndOpen( object ):
 		if pattern != "":
 			regex = re.compile('.*' + pattern + '.*')
 			matches = ""
-			print(pattern)
 			for glyph in Font.glyphs:
 				m = re.match(regex, glyph.name)
 				if m is not None:

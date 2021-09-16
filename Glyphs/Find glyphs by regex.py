@@ -12,6 +12,8 @@ Font = Glyphs.font
 class FindAndOpen( object ):
 
 	def __init__( self ):
+		# Window 'self.w':
+
 		margin_x = 20
 		margin_y = 16
 		button_width = 220

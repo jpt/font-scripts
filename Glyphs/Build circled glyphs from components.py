@@ -1,9 +1,8 @@
 
 #MenuTitle: Build circled glyphs from components
 # -*- coding: utf-8 -*-
-from __future__ import division, print_function, unicode_literals
 __doc__="""
-Builds circled numbers and letters (.blackCircled and .circled) from specificied glyphs that have already been shrunk to size. Centers vertically along the capheight.  
+Builds circled numbers and letters (.blackCircled and .circled) from specificied glyphs that have already been shrunk to size. Supports letters and numbers. Centers vertically along the capheight. First you need to create small letters that end with .small e.g. A.small, B.small. You could use .sc instead, and use lowercase names if you wanted, etc - edit the letter_suffix variable. Supply numbers with a given suffix as well (variable number_suffix); dnom in used by default.
 """
 
 from Foundation import NSClassFromString
@@ -12,33 +11,33 @@ font = Glyphs.font
 # User settings
 
 circle_diameter_default = 960
-letters = "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z".split(" ")
-numbers = "zero one two three four five six seven eight nine".split(" ")
-curve_tension = 58
-letter_suffix = "dnom"
+letter_suffix = "small"
 number_suffix = "dnom"
-black_circle_name = "_blackCircle.circle"
-stroke_circle_name = "_strokeCircle.circle"
-
-
-### End of user strings
-
-contrast = []
 letter_sources = []
 number_sources = []
+black_circle_name = "_blackCircle.circle"
+stroke_circle_name = "_strokeCircle.circle"
+letters = "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z".split(" ")
+numbers = "zero one two three four five six seven eight nine".split(" ")
+
 build_from_letters = []
 build_from_numbers = []
 to_build_letters_black = []
 to_build_numbers_black = []
+
 to_build_letters_stroke = []
 to_build_numbers_stroke = []
+
+
+contrast = []
+curve_tension = 58
 
 for letter in letters:
 	glyph_name = letter + "." + letter_suffix
 	build_from_letters.append(glyph_name)
 	stroke_circle_glyph = letter + ".circled"
 	to_build_letters_stroke.append(stroke_circle_glyph)
-	black_circle_glyph = letter + ".blackCircled"
+	black_circle_glyph = letter		 + ".blackCircled"
 	to_build_letters_black.append(black_circle_glyph)
 	
 for number in numbers:
@@ -126,10 +125,8 @@ if not font.glyphs[black_circle_name]:
 			0.0, # x position
 			center_on_cap,  # y position
 		))
-		#print(layer.paths[0].direction)
 		if layer.paths[0].direction != 1:
 			layer.paths[0].reverse()
-			#print(layer.paths[0].direction)
 	glyph.leftMetricsKey = "=50"
 	glyph.rightMetricsKey = "=50"
 	for layer in glyph.layers:
@@ -145,7 +142,6 @@ if not font.glyphs[stroke_circle_name]:
 		layer.width = circle_diameter_stroke
 		layer.LSB=0
 		layer.RSB=0
-		print(circle_diameter_stroke)
 		h = contrast[i][0]
 		v = contrast[i][1]
 		#v = contrast[i][1] *0.666
@@ -190,7 +186,6 @@ if not font.glyphs[stroke_circle_name]:
 		layer.syncMetrics()
 
 def buildCircledGlyphs(to_build,build_from,circle_type):
-	print(to_build,build_from,circle_type)
 	for i,build_glyph in enumerate(to_build):
 		if not font.glyphs[build_glyph]:
 			new_glyph = GSGlyph(build_glyph)

@@ -5,6 +5,8 @@ __doc__="""
 Builds circled numbers and letters (.blackCircled and .circled) from specificied glyphs that have already been shrunk to size. Supports letters and numbers. Centers vertically along the capheight. First you need to create small letters that end with .small e.g. A.small, B.small. You could use .sc instead, and use lowercase names if you wanted, etc - edit the letter_suffix variable. Supply numbers with a given suffix as well (variable number_suffix); dnom in used by default.
 """
 
+## TODO Vanilla UI for user input 
+
 from Foundation import NSClassFromString
 font = Glyphs.font
 

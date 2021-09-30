@@ -59,7 +59,7 @@ class SelectAndTransfer( object ):
 			
 	def buttonCallback( self, sender ):
 		feature = self.w.FeatureList.getItems()[self.w.FeatureList.get()]
-		feature_code = Font.features["rlig"].code.splitlines()
+		feature_code = Font.features[feature].code.splitlines()
 		condition_index = 0
 		
 		condition_list = []

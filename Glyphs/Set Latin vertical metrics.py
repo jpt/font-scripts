@@ -1,7 +1,7 @@
-#MenuTitle: Set vertical metrics
+#MenuTitle: Set Latin vertical metrics
 # -*- coding: utf-8 -*-
 __doc__="""
-Sets vertical metrics for a whole font according to Google's recommendations (https://github.com/googlefonts/gf-docs/blob/main/VerticalMetrics/README.md)"""
+Sets vertical metrics for a whole Latin font according to Google's recommendations (https://github.com/googlefonts/gf-docs/blob/main/VerticalMetrics/README.md)"""
 
 Font = Glyphs.font
 

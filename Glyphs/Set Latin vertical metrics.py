@@ -1,7 +1,6 @@
 #MenuTitle: Set Latin vertical metrics
 # -*- coding: utf-8 -*-
-__doc__="""
-Sets vertical metrics for a whole Latin font according to Google's recommendations (https://github.com/googlefonts/gf-docs/blob/main/VerticalMetrics/README.md)"""
+__doc__="""Sets vertical metrics for a whole Latin font according to Google's recommendations. First it turns on the 'Use Typo Metrics' custom parameter for the font. It measures the H height for typoAscender/hheaAscender, and the typoDescender/hheaDescender is calculated to add enough whitespace to center the H when it is implemented in UI on the web. The winAscent is set to the highest glyph in the font (usually boldest Ahookabove) and the winDescent is set to the lowest. For more detail read https://github.com/googlefonts/gf-docs/blob/main/VerticalMetrics/README.md"""
 
 Font = Glyphs.font
 
@@ -15,7 +14,7 @@ shortest_glyph = ""
 Agrave_height = 0
 H_height = 0
 a_z_min = 0
-shortest_a_z = ""
+a_z_min_glyph = ""
 
 print("Measuring %s glyphs across %s masters..." % (len(Font.glyphs), len(Font.masters)))
 for glyph in Font.glyphs:
@@ -42,7 +41,7 @@ for glyph in Font.glyphs:
 									if glyph.name in a_z:
 										if node.y < a_z_min:
 											a_z_min = node.y
-											shortest_a_z = glyph.name
+											a_z_min_glyph = glyph.name
 
 win_ascent = tallest + abs(shortest)
 win_descent = abs(shortest) 
@@ -72,7 +71,7 @@ winAscent: %s
 winDescent: %s
 typoLineGap: 0
 hheaLineGap 0
-""" % (tallest_glyph, tallest ,shortest_glyph, shortest, H_height, shortest_a_z, a_z_min, typo_ascender, typo_descender, win_ascent, win_descent))
+""" % (tallest_glyph, tallest ,shortest_glyph, shortest, H_height, a_z_min_glyph, a_z_min, typo_ascender, typo_descender, win_ascent, win_descent))
 
 Font.customParameters["Use Typo Metrics"] = True	
 

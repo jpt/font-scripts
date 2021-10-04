@@ -21,27 +21,27 @@ for glyph in Font.glyphs:
 	if glyph.export == True:
 		for layer in glyph.layers:
 			if layer.isMasterLayer or layer.isSpecialLayer:
-					measure_layer = layer.copyDecomposedLayer()
-					if measure_layer.shapes:
-						for path in measure_layer.shapes:
-							for node in path.nodes:
-								if(node.type != "offcurve"):
-									if node.y > tallest:
-										tallest = node.y
-										tallest_glyph = glyph.name 
-									if node.y < shortest:
-										shortest = node.y
-										shortest_glyph = glyph.name
-									if glyph.name == "Agrave":
-										if node.y > Agrave_height:
-											Agrave_height = node.y
-									if glyph.name == "H":
-										if node.y > H_height:
-											H_height = node.y
-									if glyph.name in a_z:
-										if node.y < a_z_min:
-											a_z_min = node.y
-											a_z_min_glyph = glyph.name
+				measure_layer = layer.copyDecomposedLayer()
+				if measure_layer.shapes:
+					for path in measure_layer.shapes:
+						for node in path.nodes:
+							if(node.type != "offcurve"):
+								if node.y > tallest:
+									tallest = node.y
+									tallest_glyph = glyph.name 
+								if node.y < shortest:
+									shortest = node.y
+									shortest_glyph = glyph.name
+								if glyph.name == "Agrave":
+									if node.y > Agrave_height:
+										Agrave_height = node.y
+								if glyph.name == "H":
+									if node.y > H_height:
+										H_height = node.y
+								if glyph.name in a_z:
+									if node.y < a_z_min:
+										a_z_min = node.y
+										a_z_min_glyph = glyph.name
 
 win_ascent = tallest + abs(shortest)
 win_descent = abs(shortest) 

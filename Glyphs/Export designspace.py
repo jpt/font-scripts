@@ -236,7 +236,7 @@ def getDesignSpaceDocument(font):
 	addSources(doc,special_sources)
 	instances = getInstances(font)
 	addInstances(doc,instances)
-	[condition_list, replacement_list] = getConditionsFromOT(font)
+	condition_list, replacement_list = getConditionsFromOT(font)
 	applyConditionsToRules(doc,font,condition_list,replacement_list)
 	return doc
 

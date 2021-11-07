@@ -2,13 +2,17 @@
 __doc__ = """
 Export designspace files to your UFO export folder  
 """
-
-import os
+import os, re
 from fontTools.designspaceLib import (
-	DesignSpaceDocument, AxisDescriptor, SourceDescriptor, InstanceDescriptor ) ## TODO import RuleDescriptor for rules
+	DesignSpaceDocument, AxisDescriptor, SourceDescriptor, InstanceDescriptor, RuleDescriptor ) ## TODO import RuleDescriptor for rules
 
 is_vf = True #todo dont do this
 
+def getAxisNameByTag(font,tag):
+	for axis in font.axes:
+		if axis.axisTag == tag:
+			return axis.name
+			
 def getVariableFontFamily(font):
 	for instance in font.instances:
 		if not instance.familyName:
@@ -93,7 +97,55 @@ def addAxes(doc,font):
 		a.tag = axis.axisTag
 		doc.addAxis(a)
 
-def getInstances(font):
+def getConditionsFromOT(font):
+	feature_code = ""
+	for feature_itr in font.features:
+		for line in feature_itr.code.splitlines():
+			if line.startswith("condition "):
+				feature_code = feature_itr.code
+	condition_index = 0
+	condition_list = []
+	replacement_list = [[]]
+	
+	for line in feature_code.splitlines():
+		if line.startswith("condition"):
+			conditions = []
+			conditions_list = line.split(",")
+			for condition in conditions_list:
+				m = re.findall("< (\w{4})", condition)
+				tag = m[0]
+				axis_name = getAxisNameByTag(font,tag)
+				m = re.findall("\d+(?:\.|)\d*", condition)
+				cond_min = float(m[0])
+				if len(m) > 1:
+					cond_max = float(m[1])
+					range_dict = dict(name=axis_name, minimum=cond_min, maximum=cond_max)	
+				else:
+					range_dict = dict(name=axis_name, minimum=cond_min)					
+				conditions.append(range_dict)
+			condition_list.append(conditions)
+			condition_index = condition_index + 1
+		elif line.startswith("sub"):	
+			m = re.findall("sub (.*) by (.*);", line)[0]
+			replace = (m[0],m[1])
+			try:
+				replacement_list[condition_index-1].append(replace)
+			except:
+				replacement_list.append(list())
+				replacement_list[condition_index-1].append(replace)
+	return [condition_list,replacement_list]
+
+def applyConditionsToRules(doc,font,condition_list,replacement_list):
+	rules = []
+	for i,condition in enumerate(condition_list):
+		r = RuleDescriptor()
+		r.name = "Rule %s" % str(i+1)
+		r.conditionSets.append(condition)
+		for sub in replacement_list[i]:
+			r.subs.append(sub)
+		rules.append(r)
+	doc.rules = rules
+		def getInstances(font):
 	instances_to_return = []
 	for instance in font.instances:
 		if not instance.active:
@@ -148,6 +200,8 @@ def getDesignSpaceDocument(font):
 	addSources(doc,special_sources)
 	instances = getInstances(font)
 	addInstances(doc,instances)
+	[condition_list, replacement_list] = getConditionsFromOT(font)
+	applyConditionsToRules(doc,font,condition_list,replacement_list)
 	return doc
 
 def main():

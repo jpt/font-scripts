@@ -8,6 +8,9 @@ from fontTools.designspaceLib import (
 
 is_vf = True #todo dont do this
 
+def getMutedGlyphs(font):
+	return [glyph.name for glyph in font.glyphs if not glyph.export]
+
 def getBoundsByTag(font,tag):
 	min = None
 	max = None
@@ -43,6 +46,7 @@ def getVariableFontFamily(font):
 	return None
 		
 def getSources(font,doc):
+	
 	sources = []
 	for i, master in enumerate(font.masters):
 		s = SourceDescriptor()
@@ -61,6 +65,7 @@ def getSources(font,doc):
 			s.copyFeatures = True
 			s.copyGroups = True
 			s.copyInfo = True
+		s.mutedGlyphNames = getMutedGlyphs(font)
 		sources.append(s)
 	return sources
 

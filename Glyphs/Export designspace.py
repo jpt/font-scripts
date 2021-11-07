@@ -9,11 +9,20 @@ from fontTools.designspaceLib import (
 
 isVF = True #todo dont do this
 
+def getVariableFontFamily(font):
+	for instance in font.instances:
+		if not instance.familyName:
+			return instance.name
+	return None
+		
 def getSources(font,doc):
 	sources = []
 	for i, master in enumerate(font.masters):
 		s = SourceDescriptor()
-		fontName = "%s %s" % (font.fontName, master.name) 
+		if isVF:
+			fontName = "%s %s" % (font.familyName, getVariableFontFamily(font))
+		else:
+			fontName = "%s %s" % (font.familyName, master.name) 
 		s.filename = "%s.ufo" % fontName
 		locations = dict()
 		for x, axis in enumerate(master.axes):
@@ -51,7 +60,10 @@ def getSpecialSources(font,doc):
 		axes = list(special_layer_axis.values())
 		s = SourceDescriptor()
 		s.location = special_layer_axis
-		font_name = font.fontName
+		if isVF:
+			font_name = "%s %s" % (font.familyName, getVariableFontFamily(font))
+		else:
+			font_name = font.familyName
 		for i,axis in enumerate(axes):
 			font_name = "%s %s %s" % (font_name, axes[i], font.axes[i].axisTag)
 		s.filename = "%s.ufo" % font_name
@@ -97,7 +109,7 @@ def getInstances(font):
 		else:
 			styleMapStyle = "regular"
 		if isVF:
-			family_name = font.familyName
+			family_name = "%s %s" % (font.familyName, getVariableFontFamily(font))
 		else:
 			family_name = instance.preferredFamily
 		ins.familyName = family_name
@@ -142,11 +154,14 @@ def main():
 	font = Glyphs.font
 	updateFeatures(font)
 	doc = getDesignSpaceDocument(font)
-	filePath = font.parent.fileURL().path()
-	fontName = font.fontName
-	folderName = os.path.dirname(filePath)
-	ufoFolder = os.path.join(folderName)
-	designspaceFilePath = "%s/%s.designspace" % (ufoFolder, fontName)
-	doc.write(designspaceFilePath)
-	os.system("open %s" % ufoFolder.replace(" ", "\ "))
+	try:
+		filePath = font.parent.fileURL().path()
+		fontName = font.fontName
+		folderName = os.path.dirname(filePath)
+		ufoFolder = os.path.join(folderName)
+		designspaceFilePath = "%s/%s.designspace" % (ufoFolder, fontName)
+		doc.write(designspaceFilePath)
+		os.system("open %s" % ufoFolder.replace(" ", "\ "))
+	except:
+		print("You need to save the file you're in.")
 main()

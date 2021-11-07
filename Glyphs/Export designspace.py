@@ -4,9 +4,23 @@ Export designspace files to your UFO export folder
 """
 import os, re
 from fontTools.designspaceLib import (
-	DesignSpaceDocument, AxisDescriptor, SourceDescriptor, InstanceDescriptor, RuleDescriptor ) ## TODO import RuleDescriptor for rules
+	DesignSpaceDocument, AxisDescriptor, SourceDescriptor, InstanceDescriptor, RuleDescriptor )
 
 is_vf = True #todo dont do this
+
+def getBoundsByTag(font,tag):
+	min = None
+	max = None
+	for i,axis in enumerate(font.axes):
+		if axis.axisTag != tag:
+			continue
+		for master in font.masters:
+		   coord = master.axes[i]
+		   if min == None or coord < min:
+			   min = coord
+		   if max == None or coord > max:
+			   max = coord
+	return [min,max]
 
 def getOriginMaster(font):
 	master_id = None
@@ -21,7 +35,7 @@ def getAxisNameByTag(font,tag):
 	for axis in font.axes:
 		if axis.axisTag == tag:
 			return axis.name
-			
+
 def getVariableFontFamily(font):
 	for instance in font.instances:
 		if not instance.familyName:
@@ -59,7 +73,6 @@ def getSpecialLayerAxes(font):
 	for glyph in font.glyphs:
 		for layer in glyph.layers:
 			if layer.isSpecialLayer and layer.attributes['coordinates']:
-				#if layer.axes not in special_layer_axes:
 				layer_axes = dict()
 				for i,coords in enumerate(layer.attributes['coordinates']):				
 					layer_axes[font.axes[i].name] = layer.attributes['coordinates'][coords]
@@ -92,14 +105,9 @@ def addAxes(doc,font):
 		except:
 			continue
 		a = AxisDescriptor()
-		axis_min = None
-		axis_max = None
+		axis_min, axis_max = getBoundsByTag(font,axis.axisTag)
 		for k in sorted(axis_map.keys()):
 			a.map.append((axis_map[k], k))
-			if axis_min is None or axis_map[k] < axis_min:
-				axis_min = axis_map[k]
-			if axis_max is None or axis_map[k] > axis_max:
-				axis_max = axis_map[k]
 		a.maximum = axis_max
 		a.minimum = axis_min
 		a.default = axis_min
@@ -131,7 +139,8 @@ def getConditionsFromOT(font):
 					cond_max = float(m[1])
 					range_dict = dict(name=axis_name, minimum=cond_min, maximum=cond_max)	
 				else:
-					range_dict = dict(name=axis_name, minimum=cond_min)					
+					_,cond_max = getBoundsByTag(font,tag)
+					range_dict = dict(name=axis_name, minimum=cond_min, maximum=cond_max)					
 				conditions.append(range_dict)
 			condition_list.append(conditions)
 			condition_index = condition_index + 1
@@ -218,6 +227,7 @@ def getDesignSpaceDocument(font):
 def main():
 	font = Glyphs.font
 	updateFeatures(font)
+	getConditionsFromBrackets(font)
 	doc = getDesignSpaceDocument(font)
 	try:
 		file_path = font.parent.fileURL().path()

@@ -4,9 +4,8 @@ Export designspace files to your UFO export folder
 """
 
 import os
-from re import findall, match
 from fontTools.designspaceLib import (
-	DesignSpaceDocument, AxisDescriptor, SourceDescriptor, InstanceDescriptor, RuleDescriptor)
+	DesignSpaceDocument, AxisDescriptor, SourceDescriptor, InstanceDescriptor ) ## TODO import RuleDescriptor for rules
 
 isVF = True #todo dont do this
 

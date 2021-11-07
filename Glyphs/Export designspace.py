@@ -8,6 +8,15 @@ from fontTools.designspaceLib import (
 
 is_vf = True #todo dont do this
 
+def getOriginMaster(font):
+	master_id = None
+	for cp in font.customParameters:
+		if cp.name == "Variable Font Origin":
+			master_id = cp.value
+	if master_id is None:
+		return font.masters[0].id
+	return master_id
+
 def getAxisNameByTag(font,tag):
 	for axis in font.axes:
 		if axis.axisTag == tag:
@@ -24,15 +33,16 @@ def getSources(font,doc):
 	for i, master in enumerate(font.masters):
 		s = SourceDescriptor()
 		if is_vf:
-			font_name = "%s %s" % (font.familyName, getVariableFontFamily(font))
+			font_name = "%s %s - %s" % (font.familyName, getVariableFontFamily(font), master.name)
 		else:
-			font_name = "%s %s" % (font.familyName, master.name) 
+			font_name = "%s - %s" % (font.familyName, master.name) 
 		s.filename = "%s.ufo" % font_name
 		locations = dict()
 		for x, axis in enumerate(master.axes):
 			locations[font.axes[x].name] = axis
 		s.location = locations
-		if i == 0: # Todo look for variable font origin and copy from there, or ask for user input
+		origin_master_id = getOriginMaster(font)
+		if master.id == origin_master_id:
 			s.copyLib = True
 			s.copyFeatures = True
 			s.copyGroups = True
@@ -65,11 +75,11 @@ def getSpecialSources(font,doc):
 		s = SourceDescriptor()
 		s.location = special_layer_axis
 		if is_vf:
-			font_name = "%s %s" % (font.familyName, getVariableFontFamily(font))
+			font_name = "%s %s -" % (font.familyName, getVariableFontFamily(font))
 		else:
 			font_name = font.familyName
 		for i,axis in enumerate(axes):
-			font_name = "%s %s %s" % (font_name, axes[i], font.axes[i].axisTag)
+			font_name = "%s %s %s" % (font_name, axes[i], font.axes[i].name)
 		s.filename = "%s.ufo" % font_name
 		sources.append(s)
 	return sources

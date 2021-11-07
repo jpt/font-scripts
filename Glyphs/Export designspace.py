@@ -34,6 +34,16 @@ def getOriginMaster(font):
 		return font.masters[0].id
 	return master_id
 
+def getOriginCoords(font):
+	for parameter in font.customParameters:
+		if parameter.name == "Variable Font Origin":
+			master_id = parameter.value
+	if master_id is None:
+		master_id = font.masters[0].id
+	for master in font.masters:
+		if master.id == master_id:
+			return list(master.axes)
+
 def getAxisNameByTag(font,tag):
 	for axis in font.axes:
 		if axis.axisTag == tag:
@@ -111,9 +121,12 @@ def addAxes(doc,font):
 		axis_min, axis_max = getBoundsByTag(font,axis.axisTag)
 		for k in sorted(axis_map.keys()):
 			a.map.append((axis_map[k], k))
-		a.maximum = axis_max
-		a.minimum = axis_min
-		a.default = axis_min
+		a.maximum = axis_map[axis_max]
+		a.minimum = axis_map[axis_min]
+		
+		origin_coord = getOriginCoords(font)[i]
+		user_origin = axis_map[origin_coord]
+		a.default = user_origin
 		a.name = axis.name
 		a.tag = axis.axisTag
 		doc.addAxis(a)
@@ -215,6 +228,7 @@ def updateFeatures(font):
 
 def getDesignSpaceDocument(font):
 	doc = DesignSpaceDocument()
+	getOriginCoords(font)
 	addAxes(doc,font)
 	sources = getSources(font,doc)
 	addSources(doc,sources)

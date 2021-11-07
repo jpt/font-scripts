@@ -79,8 +79,7 @@ def getFamilyName(font):
 def getFamilyNameWithMaster(font, master):
 	master_name = master.name
 	if is_vf:
-		font_name = "%s %s - %s" % (font.familyName,
-									getVariableFontFamily(font), master_name)
+		font_name = "%s %s - %s" % (font.familyName, getVariableFontFamily(font), master_name)
 	else:
 		font_name = "%s - %s" % (font.familyName, master_name)
 	return font_name

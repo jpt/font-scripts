@@ -105,13 +105,12 @@ def getSpecialSources(font,doc):
 		else:
 			font_name = font.familyName
 		for i,axis in enumerate(axes):
-			font_name = "%s %s %s" % (font_name, axes[i], font.axes[i].name)
+			font_name = "%s %s %s" % (font_name, axis, font.axes[i].name)
 		s.filename = "%s.ufo" % font_name
 		sources.append(s)
 	return sources
 
 def addAxes(doc,font):
-	axes_to_return = []
 	for i, axis in enumerate(font.axes):
 		try:
 			axis_map = font.customParameters["Axis Mappings"][axis.axisTag]
@@ -227,7 +226,6 @@ def updateFeatures(font):
 
 def getDesignSpaceDocument(font):
 	doc = DesignSpaceDocument()
-	getOriginCoords(font)
 	addAxes(doc,font)
 	sources = getSources(font,doc)
 	addSources(doc,sources)

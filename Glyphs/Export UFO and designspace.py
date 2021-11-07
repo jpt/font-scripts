@@ -92,7 +92,7 @@ def getNameWithAxis(font, axes):
 	else:
 		font_name = font.familyName
 	for i, axis in enumerate(axes):
-		font_name = "%s %s %s" % (font_name, axis, font.axes[i].name)
+		font_name = "%s %s %s" % (font_name, font.axes[i].name, axis)
 	return font_name
 
 
@@ -293,6 +293,9 @@ def createUFOmastersForBraceLayers(font, tempFolder):
 	special_layers = getSpecialLayers(font)
 	
 	# creating .glyphs file per special layer
+
+	# Note: todo, we can use getSpecialLayerAxes here too
+
 	for layer in special_layers:
 		
 		layer_values_str = layer.name.strip("{}").split(",")
@@ -304,7 +307,7 @@ def createUFOmastersForBraceLayers(font, tempFolder):
 			if value % 1 == 0:
 				value = int(value)
 			layer_values[axisName] = value
-			layer_ufo_name += "%s %s " % (value, axisName)
+			layer_ufo_name += "%s %s " % (axisName, value)
 		
 		layer_ufo_name = layer_ufo_name.strip()
 		
@@ -379,7 +382,7 @@ def main():
 		designspace_path = "%s/%s.designspace" % (temp_ufo_folder, font_name)
 		designspace_doc.write(designspace_path)
 		exportUFO(font, temp_ufo_folder)
-		createUFOmastersForBraceLayers(font, temp_ufo_folder)
+		# createUFOmastersForBraceLayers(font, temp_ufo_folder)
 		shutil.copytree(temp_ufo_folder, dest)
 	os.system("open %s" % dest.replace(" ", "\ "))
 

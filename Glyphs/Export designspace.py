@@ -1,4 +1,4 @@
-# MenuTitle: Export designspace \
+# MenuTitle: Export designspace
 __doc__ = """
 Exports a designspace file to your working directory.
 """

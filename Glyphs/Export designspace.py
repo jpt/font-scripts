@@ -75,11 +75,7 @@ def addSources(doc,sources):
 
 def getSpecialLayerAxes(font):
 	special_layer_axes = []
-	layers = [
-		layer for glyph in font.glyphs
-		for layer in glyph.layers 
-		if layer.isSpecialLayer and layer.attributes['coordinates']
-	]
+	layers = [l for g in font.glyphs for l in g.layers if l.isSpecialLayer and l.attributes['coordinates']]
 	for layer in layers:
 		layer_axes = dict()
 		for i,coords in enumerate(layer.attributes['coordinates']):				

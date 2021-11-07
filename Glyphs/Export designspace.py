@@ -169,7 +169,7 @@ def getConditionsFromOT(font):
 				replacement_list[condition_index-1].append(replace)
 	return [condition_list,replacement_list]
 
-def applyConditionsToRules(doc,font,condition_list,replacement_list):
+def applyConditionsToRules(doc,condition_list,replacement_list):
 	rules = []
 	for i,condition in enumerate(condition_list):
 		r = RuleDescriptor()
@@ -236,7 +236,7 @@ def getDesignSpaceDocument(font):
 	instances = getInstances(font)
 	addInstances(doc,instances)
 	condition_list, replacement_list = getConditionsFromOT(font)
-	applyConditionsToRules(doc,font,condition_list,replacement_list)
+	applyConditionsToRules(doc,condition_list,replacement_list)
 	return doc
 
 def main():

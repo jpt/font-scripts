@@ -4,10 +4,109 @@ Export designspace files to your UFO export folder
 """
 import os, re
 from fontTools.designspaceLib import (
-	DesignSpaceDocument, AxisDescriptor, SourceDescriptor, InstanceDescriptor, RuleDescriptor ) ## TODO import RuleDescriptor for rules
+	DesignSpaceDocument, AxisDescriptor, SourceDescriptor, InstanceDescriptor, RuleDescriptor ) 
 
 is_vf = True #todo dont do this
 
+def getOriginMaster(font):
+	master_id = None
+	for cp in font.customParameters:
+		if cp.name == "Variable Font Origin":
+			master_id = cp.value
+	if master_id is None:
+		return font.masters[0].id
+	return master_id
+			
+def getBoundsByTag(tag, font):
+	min = None
+	max = None
+	for i,axis in enumerate(font.axes):
+		if axis.axisTag != tag:
+			continue
+		for master in font.masters:
+		   coord = master.axes[i]
+		   if min == None or coord < min:
+			   min = coord
+		   if max == None or coord > max:
+			   max = coord
+	return [min,max]
+
+def exportSingleUFObyMaster(master, ufoFilePath):
+	exporter = NSClassFromString('GlyphsFileFormatUFO').alloc().init()
+	exporter.setFontMaster_(master)
+	exporter.writeUfo_toURL_error_(
+		master, NSURL.fileURLWithPath_(ufoFilePath), None)
+
+def exportUFOAndBuildDesignspace(doc, font, ufoFolder):
+	for i, master in enumerate(font.masters):
+		s = SourceDescriptor()
+		
+		filePath = font.parent.fileURL().path()
+		fontName = font.fontName
+		fileName = "%s - %s.glyphs" % (font.fontName, master.name)
+		ufoFileName = fileName.replace('.glyphs', '.ufo')
+		folderName = os.path.dirname(filePath)
+		ufoFilePath = os.path.join(ufoFolder, ufoFileName)
+		exportSingleUFObyMaster(master, ufoFilePath)
+
+	return filePath, ufoFolder
+
+def createUFOmastersForBraceLayers(font, doc, tempFolder, ufoFolder):
+	# for now we will focus only on intermediate masters
+	# we could do it in one go, but this seems more legible
+	# gathering special layers
+	
+	special_layers = getSpecialLayers(font)
+	
+	# creating .glyphs file per special layer
+	for layer in special_layers:
+		
+		layer_values_str = layer.name.strip("{}").split(",")
+		layer_values = dict()
+		layer_ufo_name = ""
+		for i, txt in enumerate(layer_values_str):
+			axis_name = font.axes[i].name
+			value = float(txt)
+			print(txt)
+			if value % 1 == 0:
+				value = int(value)
+			layer_values[axis_name] = value
+			layer_ufo_name += "%s %s " % (axis_name, value)
+		
+		layer_ufo_descrpition = layer_ufo_name.strip()
+		layer_ufo_name = "( " + layer_ufo_descrpition + " )"
+
+		fileName = "%s - %s.glyphs" % (font.fontName, layer_ufo_name)
+		dst = os.path.join(tempFolder, fileName)
+		src = font.parent.fileURL().path()
+		shutil.copyfile(src, dst)
+		print(dst)
+		layerFont = Glyphs.open(dst, False)
+		
+		# delete glyphs that are not connected to the special layer
+		glyphNamesToDelete = []
+		for g in layerFont.glyphs:
+			if g.name != layer.parent.name:
+				glyphNamesToDelete.append(g.name)
+				
+		for name in glyphNamesToDelete:
+			del(layerFont.glyphs[name])
+		
+		# delete unnescessary masters
+		masterIndexesToDelete = [ 
+				index for index,master in enumerate(layerFont.masters) if master.id != layer.associatedMasterId 
+			]
+
+		layerGlyph = layerFont.glyphs[layer.parent.name]
+		layer.layerId = layerFont.masters[0].id
+		layerFont.glyphs[layer.parent.name].layers[layerFont.masters[0].id] = layer
+		for index in reversed(masterIndexesToDelete):
+			del(layerFont.masters[index])
+		ufoFile = fileName.replace(".glyphs", ".ufo")
+		ufoFilePath = os.path.join(ufoFolder, ufoFile)
+		exportSingleUFObyMaster(layerFont.masters[0], ufoFilePath)
+		layerFont.close()
+			
 def getAxisNameByTag(font,tag):
 	for axis in font.axes:
 		if axis.axisTag == tag:
@@ -32,7 +131,8 @@ def getSources(font,doc):
 		for x, axis in enumerate(master.axes):
 			locations[font.axes[x].name] = axis
 		s.location = locations
-		if i == 0: # Todo look for variable font origin and copy from there, or ask for user input
+		origin_master_id = getOriginMaster(font)
+		if master.id == origin_master_id:
 			s.copyLib = True
 			s.copyFeatures = True
 			s.copyGroups = True
@@ -44,17 +144,22 @@ def addSources(doc,sources):
 	for source in sources:
 		doc.addSource(source)
 
-def getSpecialLayerAxes(font):
-	special_layer_axes = []
+def getSpecialLayers(font):
+	special_layers = []
 	for glyph in font.glyphs:
 		for layer in glyph.layers:
 			if layer.isSpecialLayer and layer.attributes['coordinates']:
-				#if layer.axes not in special_layer_axes:
-				layer_axes = dict()
-				for i,coords in enumerate(layer.attributes['coordinates']):				
-					layer_axes[font.axes[i].name] = layer.attributes['coordinates'][coords]
-				if layer_axes not in special_layer_axes:
-					special_layer_axes.append(layer_axes)			
+				special_layers.append(layer)
+	return special_layers
+
+def getSpecialLayerAxes(font):
+	special_layer_axes = []
+	for layer in getSpecialLayers(font):
+		layer_axes = dict()
+		for i,coords in enumerate(layer.attributes['coordinates']):				
+			layer_axes[font.axes[i].name] = layer.attributes['coordinates'][coords]
+		if layer_axes not in special_layer_axes:
+			special_layer_axes.append(layer_axes)			
 	return special_layer_axes
 
 def getSpecialSources(font,doc):
@@ -208,6 +313,7 @@ def getDesignSpaceDocument(font):
 def main():
 	font = Glyphs.font
 	updateFeatures(font)
+	
 	doc = getDesignSpaceDocument(font)
 	try:
 		file_path = font.parent.fileURL().path()

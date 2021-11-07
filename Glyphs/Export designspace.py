@@ -7,7 +7,7 @@ import os
 from fontTools.designspaceLib import (
 	DesignSpaceDocument, AxisDescriptor, SourceDescriptor, InstanceDescriptor ) ## TODO import RuleDescriptor for rules
 
-isVF = True #todo dont do this
+is_vf = True #todo dont do this
 
 def getVariableFontFamily(font):
 	for instance in font.instances:
@@ -19,11 +19,11 @@ def getSources(font,doc):
 	sources = []
 	for i, master in enumerate(font.masters):
 		s = SourceDescriptor()
-		if isVF:
-			fontName = "%s %s" % (font.familyName, getVariableFontFamily(font))
+		if is_vf:
+			font_name = "%s %s" % (font.familyName, getVariableFontFamily(font))
 		else:
-			fontName = "%s %s" % (font.familyName, master.name) 
-		s.filename = "%s.ufo" % fontName
+			font_name = "%s %s" % (font.familyName, master.name) 
+		s.filename = "%s.ufo" % font_name
 		locations = dict()
 		for x, axis in enumerate(master.axes):
 			locations[font.axes[x].name] = axis
@@ -60,7 +60,7 @@ def getSpecialSources(font,doc):
 		axes = list(special_layer_axis.values())
 		s = SourceDescriptor()
 		s.location = special_layer_axis
-		if isVF:
+		if is_vf:
 			font_name = "%s %s" % (font.familyName, getVariableFontFamily(font))
 		else:
 			font_name = font.familyName
@@ -74,21 +74,21 @@ def addAxes(doc,font):
 	axes_to_return = []
 	for i, axis in enumerate(font.axes):
 		try:
-			axisMap = font.customParameters["Axis Mappings"][axis.axisTag]
+			axis_map = font.customParameters["Axis Mappings"][axis.axisTag]
 		except:
 			continue
 		a = AxisDescriptor()
-		axisMin = None
-		axisMax = None
-		for k in sorted(axisMap.keys()):
-			a.map.append((axisMap[k], k))
-			if axisMin is None or axisMap[k] < axisMin:
-				axisMin = axisMap[k]
-			if axisMax is None or axisMap[k] > axisMax:
-				axisMax = axisMap[k]
-		a.maximum = axisMax
-		a.minimum = axisMin
-		a.default = axisMin
+		axis_min = None
+		axis_max = None
+		for k in sorted(axis_map.keys()):
+			a.map.append((axis_map[k], k))
+			if axis_min is None or axis_map[k] < axis_min:
+				axis_min = axis_map[k]
+			if axis_max is None or axis_map[k] > axis_max:
+				axis_max = axis_map[k]
+		a.maximum = axis_max
+		a.minimum = axis_min
+		a.default = axis_min
 		a.name = axis.name
 		a.tag = axis.axisTag
 		doc.addAxis(a)
@@ -103,17 +103,17 @@ def getInstances(font):
 		ins = InstanceDescriptor()
 		postScriptName = instance.fontName
 		if instance.isBold:
-			styleMapStyle = "bold"
+			style_map_style = "bold"
 		elif instance.isItalic:
-			styleMapStyle = "italic"
+			style_map_style = "italic"
 		else:
-			styleMapStyle = "regular"
-		if isVF:
+			style_map_style = "regular"
+		if is_vf:
 			family_name = "%s %s" % (font.familyName, getVariableFontFamily(font))
 		else:
 			family_name = instance.preferredFamily
 		ins.familyName = family_name
-		if isVF:
+		if is_vf:
 			style_name = instance.variableStyleName
 		else:
 			style_name = instance.name
@@ -121,11 +121,11 @@ def getInstances(font):
 		ins.filename = "%s.ufo" % postScriptName
 		ins.postScriptFontName = postScriptName
 		ins.styleMapFamilyName = "%s %s" % (instance.preferredFamily, instance.name)
-		ins.styleMapStyleName = styleMapStyle
-		axisName = {}
-		for i, axisValue in enumerate(instance.axes):
-			axisName[font.axes[i].name] = axisValue
-		ins.location = axisName
+		ins.styleMapStyleName = style_map_style
+		axis_name = {}
+		for i, axis_value in enumerate(instance.axes):
+			axis_name[font.axes[i].name] = axis_value
+		ins.location = axis_name
 		instances_to_return.append(ins)
 	return instances_to_return
 
@@ -155,13 +155,13 @@ def main():
 	updateFeatures(font)
 	doc = getDesignSpaceDocument(font)
 	try:
-		filePath = font.parent.fileURL().path()
-		fontName = font.fontName
-		folderName = os.path.dirname(filePath)
-		ufoFolder = os.path.join(folderName)
-		designspaceFilePath = "%s/%s.designspace" % (ufoFolder, fontName)
+		file_path = font.parent.fileURL().path()
+		font_name = font.fontName
+		folder_name = os.path.dirname(file_path)
+		ufo_folder = os.path.join(folder_name)
+		designspaceFilePath = "%s/%s.designspace" % (ufo_folder, font_name)
 		doc.write(designspaceFilePath)
-		os.system("open %s" % ufoFolder.replace(" ", "\ "))
+		os.system("open %s" % ufo_folder.replace(" ", "\ "))
 	except:
 		print("You need to save the file you're in.")
 main()

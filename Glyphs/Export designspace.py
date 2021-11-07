@@ -6,7 +6,7 @@ import os, re
 from fontTools.designspaceLib import (
 	DesignSpaceDocument, AxisDescriptor, SourceDescriptor, InstanceDescriptor, RuleDescriptor )
 
-is_vf = True #todo dont do this
+is_vf = True # todo add vanilla interface for this
 
 def getMutedGlyphs(font):
 	return [glyph.name for glyph in font.glyphs if not glyph.export]
@@ -46,7 +46,6 @@ def getVariableFontFamily(font):
 	return None
 		
 def getSources(font,doc):
-	
 	sources = []
 	for i, master in enumerate(font.masters):
 		s = SourceDescriptor()
@@ -128,7 +127,6 @@ def getConditionsFromOT(font):
 	condition_index = 0
 	condition_list = []
 	replacement_list = [[]]
-	
 	for line in feature_code.splitlines():
 		if line.startswith("condition"):
 			conditions = []
@@ -241,4 +239,5 @@ def main():
 		os.system("open %s" % folder_name.replace(" ", "\ "))
 	except:
 		print("You need to save the file you're in.")
+
 main()

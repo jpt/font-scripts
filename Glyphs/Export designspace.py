@@ -24,9 +24,9 @@ def getBoundsByTag(font,tag):
 
 def getOriginMaster(font):
 	master_id = None
-	for cp in font.customParameters:
-		if cp.name == "Variable Font Origin":
-			master_id = cp.value
+	for parameter in font.customParameters:
+		if parameter.name == "Variable Font Origin":
+			master_id = parameter.value
 	if master_id is None:
 		return font.masters[0].id
 	return master_id
@@ -70,14 +70,17 @@ def addSources(doc,sources):
 
 def getSpecialLayerAxes(font):
 	special_layer_axes = []
-	for glyph in font.glyphs:
-		for layer in glyph.layers:
-			if layer.isSpecialLayer and layer.attributes['coordinates']:
-				layer_axes = dict()
-				for i,coords in enumerate(layer.attributes['coordinates']):				
-					layer_axes[font.axes[i].name] = layer.attributes['coordinates'][coords]
-				if layer_axes not in special_layer_axes:
-					special_layer_axes.append(layer_axes)			
+	layers = [
+		layer for glyph in font.glyphs
+		for layer in glyph.layers 
+		if layer.isSpecialLayer and layer.attributes['coordinates']
+	]
+	for layer in layers:
+		layer_axes = dict()
+		for i,coords in enumerate(layer.attributes['coordinates']):				
+			layer_axes[font.axes[i].name] = layer.attributes['coordinates'][coords]
+		if layer_axes not in special_layer_axes:
+			special_layer_axes.append(layer_axes)			
 	return special_layer_axes
 
 def getSpecialSources(font,doc):

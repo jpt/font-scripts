@@ -1,6 +1,6 @@
-# MenuTitle: Export designspace
+# MenuTitle: Export designspace \
 __doc__ = """
-Export designspace files to your UFO export folder  
+Exports a designspace file to your working directory.
 """
 import os, re
 from fontTools.designspaceLib import (
@@ -235,10 +235,9 @@ def main():
 		file_path = font.parent.fileURL().path()
 		font_name = font.fontName
 		folder_name = os.path.dirname(file_path)
-		ufo_folder = os.path.join(folder_name)
-		designspaceFilePath = "%s/%s.designspace" % (ufo_folder, font_name)
+		designspaceFilePath = "%s/%s.designspace" % (folder_name, font_name)
 		doc.write(designspaceFilePath)
-		os.system("open %s" % ufo_folder.replace(" ", "\ "))
+		os.system("open %s" % folder_name.replace(" ", "\ "))
 	except:
 		print("You need to save the file you're in.")
 main()

@@ -55,7 +55,7 @@ def getVariableFontFamily(font):
 			return instance.name
 	return None
 		
-def getSources(font,doc):
+def getSources(font):
 	sources = []
 	for i, master in enumerate(font.masters):
 		s = SourceDescriptor()
@@ -93,7 +93,7 @@ def getSpecialLayerAxes(font):
 			special_layer_axes.append(layer_axes)			
 	return special_layer_axes
 
-def getSpecialSources(font,doc):
+def getSpecialSources(font):
 	sources = []
 	special_layer_axes = getSpecialLayerAxes(font)
 	for i,special_layer_axis in enumerate(special_layer_axes):
@@ -227,9 +227,9 @@ def updateFeatures(font):
 def getDesignSpaceDocument(font):
 	doc = DesignSpaceDocument()
 	addAxes(doc,font)
-	sources = getSources(font,doc)
+	sources = getSources(font)
 	addSources(doc,sources)
-	special_sources = getSpecialSources(font,doc)
+	special_sources = getSpecialSources(font)
 	addSources(doc,special_sources)
 	instances = getInstances(font)
 	addInstances(doc,instances)

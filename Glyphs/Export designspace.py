@@ -227,7 +227,6 @@ def getDesignSpaceDocument(font):
 def main():
 	font = Glyphs.font
 	updateFeatures(font)
-	getConditionsFromBrackets(font)
 	doc = getDesignSpaceDocument(font)
 	try:
 		file_path = font.parent.fileURL().path()

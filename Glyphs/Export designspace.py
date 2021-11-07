@@ -221,7 +221,6 @@ def addInstances(doc,instances):
 		doc.addInstance(instance)
 
 def updateFeatures(font):
-	# Update auto features 
 	for feature in font.features:
 		if feature.automatic:
 			feature.update()

@@ -4,7 +4,7 @@ Export designspace files to your UFO export folder
 """
 import os, re
 from fontTools.designspaceLib import (
-	DesignSpaceDocument, AxisDescriptor, SourceDescriptor, InstanceDescriptor, RuleDescriptor )
+	DesignSpaceDocument, AxisDescriptor, SourceDescriptor, InstanceDescriptor, RuleDescriptor ) ## TODO import RuleDescriptor for rules
 
 is_vf = True #todo dont do this
 
@@ -145,7 +145,8 @@ def applyConditionsToRules(doc,font,condition_list,replacement_list):
 			r.subs.append(sub)
 		rules.append(r)
 	doc.rules = rules
-		def getInstances(font):
+
+def getInstances(font):
 	instances_to_return = []
 	for instance in font.instances:
 		if not instance.active:

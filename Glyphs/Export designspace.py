@@ -10,9 +10,6 @@ from fontTools.designspaceLib import (
 
 isVF = True #todo dont do this
 
-def getVariableFontName(font):
-	return "Lol"
-
 def getSources(font,doc):
 	sources = []
 	for i, master in enumerate(font.masters):

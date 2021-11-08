@@ -325,11 +325,17 @@ def createUFOmastersForBraceLayers(font, temp_ufo_folder):
 		for name in glyph_names_to_delete:
 			del(layer_font.glyphs[name])
 
-		# # delete unnescessary masters
+		# delete unnescessary masters
 		special_master = getOriginMaster(font)
 		master_indexes_to_delete = [
 			index for index, master in enumerate(layer_font.masters) if master.id != special_master
 		]
+
+		# this is the last piece to figure out - put the specific special layer onto one master and delete the others
+
+		# layer_glyph = layer_font.glyphs[layer.parent.name]
+		# layer.layerId = layer_font.masters[0].id
+		# layer_font.glyphs[layer.parent.name].layers[later_font.masters[0].id] = layer
 
 		for index in reversed(master_indexes_to_delete):
 			del(layer_font.masters[index])

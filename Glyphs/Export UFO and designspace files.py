@@ -16,10 +16,15 @@ is_vf = True  # todo add vanilla interface for this
 
 
 def getMutedGlyphs(font):
+	__doc__ = "Returns an array of non-exporting glyphs to be added as muted glyphs in the designspace"
 	return [glyph.name for glyph in font.glyphs if not glyph.export]
 
 
 def getBoundsByTag(font, tag):
+	__doc__ = """Returns an array in the form of [minimum, maximum] representing the bounds of an axis, which is found by axis tag. 
+	
+	Example use: 
+	min, max = getBoundsByTag(Glyphs.font,"wght")"""
 	min = None
 	max = None
 	for i, axis in enumerate(font.axes):
@@ -35,6 +40,7 @@ def getBoundsByTag(font, tag):
 
 
 def getOriginMaster(font):
+	__doc__ = """Returns a string of the master ID referencing the master that is set to the variable font origin by custom paramter"""
 	master_id = None
 	for parameter in font.customParameters:
 		if parameter.name == "Variable Font Origin":
@@ -45,6 +51,7 @@ def getOriginMaster(font):
 
 
 def getOriginCoords(font):
+	__doc__ = """Returns an array of axis coordinates specified on the variable font origin master"""
 	for parameter in font.customParameters:
 		if parameter.name == "Variable Font Origin":
 			master_id = parameter.value
@@ -97,6 +104,7 @@ def getNameWithAxis(font, axes):
 
 
 def alignSpecialLayers(font):
+	__doc__ = """Applies the same master ID referencing the variable font origin to all brace layers"""
 	master_id = getOriginMaster(font)
 	special_layers = getSpecialLayers(font)
 	for layer in special_layers:

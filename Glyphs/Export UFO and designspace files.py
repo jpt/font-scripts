@@ -238,7 +238,7 @@ def getInstances(font):
 	for instance in font.instances:
 		if not instance.active:
 			continue
-		if not instance.familyName:  # skip VF export settings-as-instances
+		if not instance.familyName:  # skip Variable Font Setting, which is an instance
 			continue
 		ins = InstanceDescriptor()
 		postScriptName = instance.fontName

@@ -1,6 +1,6 @@
 # MenuTitle: Export UFO and designspace files
 __doc__ = """
-Exports UFO and designspace files. Supports substitutions defined in OT features, but not bracket layers. Brace layers supported in designspace but still being worked out in UFO. With contributions from Rafał Buchner. Thanks to Frederik Berlaen and Joancarles Casasín for ideas that served as inspiration (https://robofont.com/documentation/how-tos/converting-from-glyphs-to-ufo/), and to the maintainers of designspaceLib.
+Exports UFO and designspace files. Supports substitutions defined in OT features, but not bracket layers. Brace layers supported, but not yet as support layers for Skateboard. With contributions from Rafał Buchner. Thanks to Frederik Berlaen and Joancarles Casasín for ideas that served as inspiration (https://robofont.com/documentation/how-tos/converting-from-glyphs-to-ufo/), and to the maintainers of designspaceLib.
 """
 
 import re
@@ -308,7 +308,6 @@ def createUFOmastersForBraceLayers(font, temp_ufo_folder):
 		src = font.parent.fileURL().path()
 		shutil.copyfile(src, dest)
 		layer_font = Glyphs.open(dest, False)
-		print(layer_font)
 
 		# delete glyphs that are not connected to the special layer
 		glyph_names_to_delete = []
@@ -325,15 +324,12 @@ def createUFOmastersForBraceLayers(font, temp_ufo_folder):
 
 		for name in glyph_names_to_delete:
 			del(layer_font.glyphs[name])
-		for glyph in layer_font.glyphs:
-			print(glyph)
 
 		# # delete unnescessary masters
 		special_master = getOriginMaster(font)
 		master_indexes_to_delete = [
 			index for index, master in enumerate(layer_font.masters) if master.id != special_master
 		]
-		print(master_indexes_to_delete)
 
 		for index in reversed(master_indexes_to_delete):
 			del(layer_font.masters[index])
@@ -341,7 +337,6 @@ def createUFOmastersForBraceLayers(font, temp_ufo_folder):
 		ufo_file_path = os.path.join(temp_ufo_folder, ufo_file_name)
 		glyphs_file_path = os.path.join(temp_ufo_folder, file_name)
 		exportSingleUFObyMaster(layer_font.masters[0], ufo_file_path)
-		print(ufo_file_path, glyphs_file_path)
 		layer_font.close()
 		os.remove(glyphs_file_path)
 

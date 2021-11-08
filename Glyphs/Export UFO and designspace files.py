@@ -96,7 +96,7 @@ def getNameWithAxis(font, axes):
 	return font_name
 
 
-def moveSpecialLayers(font):
+def alignSpecialLayers(font):
 	master_id = getOriginMaster(font)
 	special_layers = getSpecialLayers(font)
 	for layer in special_layers:
@@ -364,7 +364,7 @@ def exportUFOMasters(font, dest):
 
 def main():
 	font = Glyphs.font
-	moveSpecialLayers(font)
+	alignSpecialLayers(font)
 	updateFeatures(font)
 	file_path = font.parent.fileURL().path()
 	font_name = getFamilyName(font)

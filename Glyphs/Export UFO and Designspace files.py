@@ -1,6 +1,6 @@
-# MenuTitle: Export UFO and designspace
+# MenuTitle: Export UFO and designspace files
 __doc__ = """
-Exports UFO and designspace files
+Exports UFO and designspace files. Supports substitutions defined in OT features, but not bracket layers. Brace layers supported in designspace but still being worked out in UFO. With contributions from Rafał Buchner. Thanks to Frederik Berlaen and Joancarles Casasín ideas that served as inspiration (https://robofont.com/documentation/how-tos/converting-from-glyphs-to-ufo/), and to the maintainers of designspaceLib.
 """
 
 import re
@@ -356,7 +356,7 @@ def exportSingleUFObyMaster(master, dest):
 	exporter.writeUfo_toURL_error_(master, NSURL.fileURLWithPath_(dest), None)
 
 
-def exportUFO(font, dest):
+def exportUFOMasters(font, dest):
 	for master in font.masters:
 		font_name = getFamilyNameWithMaster(font, master)
 		file_name = "%s.glyphs" % font_name
@@ -380,7 +380,7 @@ def main():
 		designspace_doc = getDesignSpaceDocument(font)
 		designspace_path = "%s/%s.designspace" % (temp_ufo_folder, font_name)
 		designspace_doc.write(designspace_path)
-		exportUFO(font, temp_ufo_folder)
+		exportUFOMasters(font, temp_ufo_folder)
 		# createUFOmastersForBraceLayers(font, temp_ufo_folder)
 		shutil.copytree(temp_ufo_folder, dest)
 	os.system("open %s" % dest.replace(" ", "\ "))

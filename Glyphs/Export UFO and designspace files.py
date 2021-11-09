@@ -1,4 +1,4 @@
-# MenuTitle: Export UFONEW
+# MenuTitle: Export UFO and designspace files
 __doc__ = """
 Exports UFO and designspace files. Supports substitutions defined in OT features, but not bracket layers. Brace layers supported, but not yet as support layers for Skateboard. With contributions from Rafał Buchner. Thanks to Frederik Berlaen and Joancarles Casasín for ideas that served as inspiration (https://robofont.com/documentation/how-tos/converting-from-glyphs-to-ufo/), and to the maintainers of designspaceLib.
 """

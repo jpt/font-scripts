@@ -12,7 +12,7 @@ from fontTools.designspaceLib import (
 	DesignSpaceDocument, AxisDescriptor, SourceDescriptor, InstanceDescriptor, RuleDescriptor)
 
 is_vf = True  # todo add vanilla interface for this
-delete_unnecessary_glyphs = True # set to false if you want to keep kerning for now... 
+delete_unnecessary_glyphs = True
 
 def getMutedGlyphs(font):
 	__doc__ = "Returns an array of non-exporting glyphs to be added as muted glyphs in the designspace"

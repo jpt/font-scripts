@@ -11,9 +11,8 @@ import AppKit
 from fontTools.designspaceLib import (
 	DesignSpaceDocument, AxisDescriptor, SourceDescriptor, InstanceDescriptor, RuleDescriptor)
 
-
 is_vf = True  # todo add vanilla interface for this
-
+delete_unnecessary_glyphs = True # set to false if you want to keep kerning for now... 
 
 def getMutedGlyphs(font):
 	__doc__ = "Returns an array of non-exporting glyphs to be added as muted glyphs in the designspace"
@@ -333,6 +332,7 @@ def getDesignSpaceDocument(font):
 
 
 def generateMastersAtBraces(font, temp_ufo_folder):
+	global delete_unnecessary_glyphs
 	special_layer_axes = getSpecialLayerAxes(font)
 	for instance in font.instances:
 		print(instance.axes)
@@ -344,16 +344,16 @@ def generateMastersAtBraces(font, temp_ufo_folder):
 		ufo_file_name = "%s.ufo" % ins.name
 		ins.axes = axes
 		brace_font = ins.interpolatedFont
-		glyph_names_to_delete = getNonSpecialGlyphs(font, axes)
-		for glyph in glyph_names_to_delete:
-			del(brace_font.glyphs[glyph])
-		feature_keys = [feature.name for feature in brace_font.features]
-		for key in feature_keys:
-			del(brace_font.features[key])
-		class_keys = [font_class.name for font_class in brace_font.classes]
-		for key in class_keys:
-			del(brace_font.classes[key])
-
+		if delete_unnecessary_glyphs:
+			glyph_names_to_delete = getNonSpecialGlyphs(font, axes)
+			for glyph in glyph_names_to_delete:
+				del(brace_font.glyphs[glyph])
+			feature_keys = [feature.name for feature in brace_font.features]
+			for key in feature_keys:
+				del(brace_font.features[key])
+			class_keys = [font_class.name for font_class in brace_font.classes]
+			for key in class_keys:
+				del(brace_font.classes[key])
 		ufo_file_path = os.path.join(temp_ufo_folder, ufo_file_name)
 		exportSingleUFObyMaster(brace_font.masters[0], ufo_file_path)
 
@@ -394,6 +394,5 @@ def main():
 		generateMastersAtBraces(font, temp_ufo_folder)
 		shutil.copytree(temp_ufo_folder, dest)
 	os.system("open %s" % dest.replace(" ", "\ "))
-
 
 main()

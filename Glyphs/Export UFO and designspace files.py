@@ -335,6 +335,7 @@ def createUFOmastersForBraceLayers(font, temp_ufo_folder):
 		for name in glyph_names_to_delete:
 			del(layer_font.glyphs[name])
 
+
 		master_indexes_to_delete = [
 			index for index, master in enumerate(layer_font.masters) if master.id != special_master
 		]
@@ -347,8 +348,7 @@ def createUFOmastersForBraceLayers(font, temp_ufo_folder):
 				if layer.isSpecialLayer and layer.attributes['coordinates']:
 					coords = list(layer.attributes['coordinates'].values())
 					if coords == axes:
-						print(coords)
-						layer_font.glyphs[glyph.name].layers[0] = layer_font.glyphs[layer.parent.name].layers[layer.layerId]
+						layer_font.glyphs[glyph.name].layers[special_master] = layer
 
 		ufo_file_name = file_name.replace(".glyphs", ".ufo")
 		ufo_file_path = os.path.join(temp_ufo_folder, ufo_file_name)

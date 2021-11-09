@@ -1,4 +1,4 @@
-# MenuTitle: Export UFO and designspace files
+# MenuTitle: Export UFONEW
 __doc__ = """
 Exports UFO and designspace files. Supports substitutions defined in OT features, but not bracket layers. Brace layers supported, but not yet as support layers for Skateboard. With contributions from Rafał Buchner. Thanks to Frederik Berlaen and Joancarles Casasín for ideas that served as inspiration (https://robofont.com/documentation/how-tos/converting-from-glyphs-to-ufo/), and to the maintainers of designspaceLib.
 """
@@ -13,8 +13,7 @@ from fontTools.designspaceLib import (
 
 
 is_vf = True  # todo add vanilla interface for this
-feature_before = None # todo make this more elegant
-feature_index = None # ^
+
 
 def getMutedGlyphs(font):
 	__doc__ = "Returns an array of non-exporting glyphs to be added as muted glyphs in the designspace"
@@ -156,6 +155,21 @@ def getSpecialLayerAxes(font):
 	return special_layer_axes
 
 
+def getNonSpecialGlyphs(font, axes):
+	glyph_names_to_delete = []
+	for glyph in font.glyphs:
+		delete_glyph = True
+		for layer in glyph.layers:
+			if layer.isSpecialLayer and layer.attributes['coordinates']:
+				coords = list(layer.attributes['coordinates'].values())
+				if coords == axes:
+					delete_glyph = False
+		if delete_glyph:
+			if glyph.name not in glyph_names_to_delete:
+				glyph_names_to_delete.append(glyph.name)
+	return glyph_names_to_delete
+
+
 def getSpecialSources(font):
 	sources = []
 	special_layer_axes = getSpecialLayerAxes(font)
@@ -198,7 +212,6 @@ def getConditionsFromOT(font):
 	condition_index = 0
 	condition_list = []
 	replacement_list = [[]]
-	print(feature_code)
 	for line in feature_code.splitlines():
 		if line.startswith("condition"):
 			conditions = []
@@ -230,24 +243,17 @@ def getConditionsFromOT(font):
 				replacement_list[condition_index-1].append(replace)
 	return [condition_list, replacement_list]
 
+
 def removeSubsFromOT(font):
-	global feature_before
-	global feature_index
-	for i,feature_itr in enumerate(font.features):
+	feature_index = None
+	for i, feature_itr in enumerate(font.features):
 		for line in feature_itr.code.splitlines():
 			if line.startswith("condition "):
 				feature_index = i
 				break
 	if(feature_index):
-		feature_before = font.features[feature_index].code
-		print(feature_before)
-		font.features[feature_index].code = re.sub(r'#ifdef VARIABLE.*?#endif','',font.features[feature_index].code, flags=re.DOTALL)
-
-def restoreOTSubs(font):
-	global feature_before
-	global feature_index
-	if feature_index and feature_before:
-		font.features[feature_index].code = feature_before
+		font.features[feature_index].code = re.sub(
+			r'#ifdef VARIABLE.*?#endif', '', font.features[feature_index].code, flags=re.DOTALL)
 
 
 def applyConditionsToRules(doc, condition_list, replacement_list):
@@ -326,57 +332,30 @@ def getDesignSpaceDocument(font):
 	return doc
 
 
-def createUFOmastersForBraceLayers(font, temp_ufo_folder):
+def generateMastersAtBraces(font, temp_ufo_folder):
 	special_layer_axes = getSpecialLayerAxes(font)
+	for instance in font.instances:
+		print(instance.axes)
 	for i, special_layer_axis in enumerate(special_layer_axes):
 		axes = list(special_layer_axis.values())
-		font_name = getNameWithAxis(font, axes)
-		file_name = "%s.glyphs" % font_name
+		font.instances.append(GSInstance())
+		ins = font.instances[-1]
+		ins.name = getNameWithAxis(font, axes)
+		ufo_file_name = "%s.ufo" % ins.name
+		ins.axes = axes
+		brace_font = ins.interpolatedFont
+		glyph_names_to_delete = getNonSpecialGlyphs(font, axes)
+		for glyph in glyph_names_to_delete:
+			del(brace_font.glyphs[glyph])
+		feature_keys = [feature.name for feature in brace_font.features]
+		for key in feature_keys:
+			del(brace_font.features[key])
+		class_keys = [font_class.name for font_class in brace_font.classes]
+		for key in class_keys:
+			del(brace_font.classes[key])
 
-		dest = os.path.join(temp_ufo_folder, file_name)
-		src = font.parent.fileURL().path()
-		shutil.copyfile(src, dest)
-		layer_font = Glyphs.open(dest, False)
-
-		special_master = getOriginMaster(font)
-
-		# delete glyphs that are not connected to the special layer
-		glyph_names_to_delete = []
-		for glyph in layer_font.glyphs:
-			delete_glyph = True
-			for layer in glyph.layers:
-				if layer.isSpecialLayer and layer.attributes['coordinates']:
-					coords = list(layer.attributes['coordinates'].values())
-					if coords == axes:
-						delete_glyph = False
-			if delete_glyph:
-				if glyph.name not in glyph_names_to_delete:
-					glyph_names_to_delete.append(glyph.name)
-
-		for name in glyph_names_to_delete:
-			del(layer_font.glyphs[name])
-
-
-		master_indexes_to_delete = [
-			index for index, master in enumerate(layer_font.masters) if master.id != special_master
-		]
-
-		for index in reversed(master_indexes_to_delete):
-			del(layer_font.masters[index])
-
-		for glyph in layer_font.glyphs:
-			for layer in reversed(glyph.layers):
-				if layer.isSpecialLayer and layer.attributes['coordinates']:
-					coords = list(layer.attributes['coordinates'].values())
-					if coords == axes:
-						layer_font.glyphs[glyph.name].layers[special_master] = layer
-
-		ufo_file_name = file_name.replace(".glyphs", ".ufo")
 		ufo_file_path = os.path.join(temp_ufo_folder, ufo_file_name)
-		glyphs_file_path = os.path.join(temp_ufo_folder, file_name)
-		exportSingleUFObyMaster(layer_font.masters[0], ufo_file_path)
-		layer_font.close()
-		os.remove(glyphs_file_path)
+		exportSingleUFObyMaster(brace_font.masters[0], ufo_file_path)
 
 
 def exportSingleUFObyMaster(master, dest):
@@ -395,10 +374,10 @@ def exportUFOMasters(font, dest):
 
 
 def main():
-	font = Glyphs.font
+	font = Glyphs.font.copy()
 	alignSpecialLayers(font)
 	updateFeatures(font)
-	file_path = font.parent.fileURL().path()
+	file_path = Glyphs.font.parent.fileURL().path()
 	font_name = getFamilyName(font)
 	file_dir = os.path.dirname(file_path)
 	dest = os.path.join(file_dir, 'ufo')
@@ -412,8 +391,7 @@ def main():
 		designspace_path = "%s/%s.designspace" % (temp_ufo_folder, font_name)
 		designspace_doc.write(designspace_path)
 		exportUFOMasters(font, temp_ufo_folder)
-		createUFOmastersForBraceLayers(font, temp_ufo_folder)
-		restoreOTSubs(font)
+		generateMastersAtBraces(font, temp_ufo_folder)
 		shutil.copytree(temp_ufo_folder, dest)
 	os.system("open %s" % dest.replace(" ", "\ "))
 

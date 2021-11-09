@@ -13,7 +13,8 @@ from fontTools.designspaceLib import (
 
 
 is_vf = True  # todo add vanilla interface for this
-
+feature_before = None # todo make this more elegant
+feature_index = None # ^
 
 def getMutedGlyphs(font):
 	__doc__ = "Returns an array of non-exporting glyphs to be added as muted glyphs in the designspace"
@@ -197,6 +198,7 @@ def getConditionsFromOT(font):
 	condition_index = 0
 	condition_list = []
 	replacement_list = [[]]
+	print(feature_code)
 	for line in feature_code.splitlines():
 		if line.startswith("condition"):
 			conditions = []
@@ -227,6 +229,25 @@ def getConditionsFromOT(font):
 				replacement_list.append(list())
 				replacement_list[condition_index-1].append(replace)
 	return [condition_list, replacement_list]
+
+def removeSubsFromOT(font):
+	global feature_before
+	global feature_index
+	for i,feature_itr in enumerate(font.features):
+		for line in feature_itr.code.splitlines():
+			if line.startswith("condition "):
+				feature_index = i
+				break
+	if(feature_index):
+		feature_before = font.features[feature_index].code
+		print(feature_before)
+		font.features[feature_index].code = re.sub(r'#ifdef VARIABLE.*?#endif','',font.features[feature_index].code, flags=re.DOTALL)
+
+def restoreOTSubs(font):
+	global feature_before
+	global feature_index
+	if feature_index and feature_before:
+		font.features[feature_index].code = feature_before
 
 
 def applyConditionsToRules(doc, condition_list, replacement_list):
@@ -387,10 +408,12 @@ def main():
 		temp_ufo_folder = os.path.join(tmp_dir, "ufo")
 		os.mkdir(temp_ufo_folder)
 		designspace_doc = getDesignSpaceDocument(font)
+		removeSubsFromOT(font)
 		designspace_path = "%s/%s.designspace" % (temp_ufo_folder, font_name)
 		designspace_doc.write(designspace_path)
 		exportUFOMasters(font, temp_ufo_folder)
 		createUFOmastersForBraceLayers(font, temp_ufo_folder)
+		restoreOTSubs(font)
 		shutil.copytree(temp_ufo_folder, dest)
 	os.system("open %s" % dest.replace(" ", "\ "))
 

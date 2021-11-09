@@ -317,9 +317,11 @@ def createUFOmastersForBraceLayers(font, temp_ufo_folder):
 		shutil.copyfile(src, dest)
 		layer_font = Glyphs.open(dest, False)
 
+		special_master = getOriginMaster(font)
+
 		# delete glyphs that are not connected to the special layer
 		glyph_names_to_delete = []
-		for i, glyph in enumerate(layer_font.glyphs):
+		for glyph in layer_font.glyphs:
 			delete_glyph = True
 			for layer in glyph.layers:
 				if layer.isSpecialLayer and layer.attributes['coordinates']:
@@ -333,20 +335,21 @@ def createUFOmastersForBraceLayers(font, temp_ufo_folder):
 		for name in glyph_names_to_delete:
 			del(layer_font.glyphs[name])
 
-		# delete unnescessary masters
-		special_master = getOriginMaster(font)
 		master_indexes_to_delete = [
 			index for index, master in enumerate(layer_font.masters) if master.id != special_master
 		]
 
-		# this is the last piece to figure out - put the specific special layer onto one master and delete the others
-
-		# layer_glyph = layer_font.glyphs[layer.parent.name]
-		# layer.layerId = layer_font.masters[0].id
-		# layer_font.glyphs[layer.parent.name].layers[later_font.masters[0].id] = layer
-
 		for index in reversed(master_indexes_to_delete):
 			del(layer_font.masters[index])
+
+		for glyph in layer_font.glyphs:
+			for layer in reversed(glyph.layers):
+				if layer.isSpecialLayer and layer.attributes['coordinates']:
+					coords = list(layer.attributes['coordinates'].values())
+					if coords == axes:
+						print(coords)
+						layer_font.glyphs[glyph.name].layers[0] = layer_font.glyphs[layer.parent.name].layers[layer.layerId]
+
 		ufo_file_name = file_name.replace(".glyphs", ".ufo")
 		ufo_file_path = os.path.join(temp_ufo_folder, ufo_file_name)
 		glyphs_file_path = os.path.join(temp_ufo_folder, file_name)

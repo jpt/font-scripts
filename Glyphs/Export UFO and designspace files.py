@@ -13,7 +13,9 @@ from fontTools.designspaceLib import (
 	DesignSpaceDocument, AxisDescriptor, SourceDescriptor, InstanceDescriptor, RuleDescriptor)
 
 is_vf = True  # To do: add vanilla interface for this
-delete_unnecessary_glyphs = True # Set to False if you want brace layers to be full masters
+# Set to False if you want brace layers to be full masters
+delete_unnecessary_glyphs = True
+
 
 def getMutedGlyphs(font):
 	__doc__ = "Provided a font object, returns an array of non-exporting glyphs to be added as muted glyphs in the designspace"
@@ -392,13 +394,15 @@ def generateMastersAtBraces(font, temp_ufo_folder):
 			brace_font.kerningRTL = {}
 			brace_font.kerningVertical = {}
 		ufo_file_path = os.path.join(temp_ufo_folder, ufo_file_name)
-		exportSingleUFObyMaster(brace_font.masters[0], ufo_file_path)
+		exportSingleUFObyMaster(
+			brace_font.masters[0], ufo_file_path, brace_font.masters[0].name)
 
 
-def exportSingleUFObyMaster(master, dest):
-	__doc__ = """Provided a master and destination, exports a UFO file of that master"""
+def exportSingleUFObyMaster(master, dest, name):
+	__doc__ = """Provided a master, destination, and name, exports a UFO file of that master"""
 	exporter = NSClassFromString('GlyphsFileFormatUFO').alloc().init()
 	exporter.setFontMaster_(master)
+	print("Exporting master: %s" % name)
 	exporter.writeUfo_toURL_error_(master, NSURL.fileURLWithPath_(dest), None)
 
 
@@ -409,7 +413,7 @@ def exportUFOMasters(font, dest):
 		file_name = "%s.glyphs" % font_name
 		ufo_file_name = file_name.replace('.glyphs', '.ufo')
 		ufo_file_path = os.path.join(dest, ufo_file_name)
-		exportSingleUFObyMaster(master, ufo_file_path)
+		exportSingleUFObyMaster(master, ufo_file_path, font_name)
 
 
 def main():
@@ -419,7 +423,7 @@ def main():
 	alignSpecialLayers(font)
 	# update any automatically generated features that need it
 	updateFeatures(font)
-	
+
 	# as a destination path (and empty it first if it exists)
 	file_path = Glyphs.font.parent.fileURL().path()
 	font_name = getFamilyName(font)
@@ -427,7 +431,7 @@ def main():
 	dest = os.path.join(file_dir, 'ufo')
 	if os.path.exists(dest):
 		shutil.rmtree(dest)
-	
+
 	# when creating files below, export them to tmp_dir before we copy it over.
 	# tempfile will automatically delete the temp files we generated
 	with tempfile.TemporaryDirectory() as tmp_dir:
@@ -445,11 +449,11 @@ def main():
 		exportUFOMasters(font, temp_ufo_folder)
 		print("Building UFOs for brace layers if present...")
 		generateMastersAtBraces(font, temp_ufo_folder)
-		print("Exporting...")
 		# copy from temp dir to the destination. after this, tempfile will automatically delete the temp files
 		shutil.copytree(temp_ufo_folder, dest)
 	# open the output dir
 	os.system("open %s" % dest.replace(" ", "\ "))
 	print("Done!")
+
 
 main()

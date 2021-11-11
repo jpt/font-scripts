@@ -99,6 +99,13 @@ def getFamilyNameWithMaster(font, master):
 	return font_name
 
 
+def getStyleNameWithAxis(font,axes):
+	style_name = ""
+	for i, axis in enumerate(axes):
+		style_name = "%s %s %s" % (style_name, font.axes[i].name, axis)
+	return style_name.strip()
+
+
 def getNameWithAxis(font, axes):
 	__doc__ = """Provided a font and a dict of axes for a brace layer, returns a font family name"""
 	if is_vf:
@@ -369,8 +376,11 @@ def generateMastersAtBraces(font, temp_ufo_folder):
 		ins = font.instances[-1]
 		ins.name = getNameWithAxis(font, axes)
 		ufo_file_name = "%s.ufo" % ins.name
+		style_name = getStyleNameWithAxis(font,axes)
+		ins.styleName = style_name
 		ins.axes = axes
 		brace_font = ins.interpolatedFont
+		brace_font.masters[0].name = style_name
 		if delete_unnecessary_glyphs:
 			glyph_names_to_delete = getNonSpecialGlyphs(font, axes)
 			for glyph in glyph_names_to_delete:
@@ -397,13 +407,23 @@ def generateMastersAtBraces(font, temp_ufo_folder):
 		exportSingleUFObyMaster(
 			brace_font.masters[0], ufo_file_path, brace_font.masters[0].name)
 
+def fixStyleName(name,path):
+	new_path = os.path.join(path, "fontinfo.plist")
+	f = open(new_path,'r', encoding="utf-8")
+	file_data = f.read()
+	f.close()
+	new_data = re.sub(r'(<key>styleName</key>\n*\r*\s+<string>)(.*)?</string>',rf'\1{name}</string>', file_data)
+	f = open(new_path,'w', encoding="utf-8")
+	f.write(new_data)
+	f.close()
 
 def exportSingleUFObyMaster(master, dest, name):
 	__doc__ = """Provided a master, destination, and name, exports a UFO file of that master"""
 	exporter = NSClassFromString('GlyphsFileFormatUFO').alloc().init()
 	exporter.setFontMaster_(master)
-	print("Exporting master: %s" % name)
+	print("Exporting master: %s - %s" % (master.font.familyName, master.name))
 	exporter.writeUfo_toURL_error_(master, NSURL.fileURLWithPath_(dest), None)
+	fixStyleName(master.name,dest)
 
 
 def exportUFOMasters(font, dest):
@@ -452,6 +472,8 @@ def main():
 		# copy from temp dir to the destination. after this, tempfile will automatically delete the temp files
 		shutil.copytree(temp_ufo_folder, dest)
 	# open the output dir
+
+	
 	os.system("open %s" % dest.replace(" ", "\ "))
 	print("Done!")
 

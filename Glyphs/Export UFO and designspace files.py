@@ -13,9 +13,10 @@ from fontTools.designspaceLib import (
 	DesignSpaceDocument, AxisDescriptor, SourceDescriptor, InstanceDescriptor, RuleDescriptor)
 
 is_vf = True  # To do: add vanilla interface for this
-# Set to False if you want brace layers to be full masters
-delete_unnecessary_glyphs = True
-
+delete_unnecessary_glyphs = True # Set to False if you want brace layers to be full masters and not just affected glyphs
+use_production_names = False # Set to true for production unicode glyph names
+decompose_smart_stuff = True # Not sure what happens if this is set to False. Good luck! :D
+add_mastername_as_stylename = True # Needed for ScaleFast and potentially other Robofont plugins
 
 def getMutedGlyphs(font):
 	__doc__ = "Provided a font object, returns an array of non-exporting glyphs to be added as muted glyphs in the designspace"
@@ -126,7 +127,7 @@ def alignSpecialLayers(font):
 
 
 def getSources(font):
-	__doc__ = """Provided a font object, creates and returns a designspaceLib SourceDescriptor"""
+	__doc__ = """Provided a font object, creates and returns a list of designspaceLib SourceDescriptors"""
 	sources = []
 	for i, master in enumerate(font.masters):
 		s = SourceDescriptor()
@@ -191,7 +192,7 @@ def getNonSpecialGlyphs(font, axes):
 
 
 def getSpecialSources(font):
-	__doc__ = """Returns an array of designspaceLib SourceDescriptors """
+	__doc__ = """Provided a font object, returns an array of designspaceLib SourceDescriptors """
 
 	sources = []
 	special_layer_axes = getSpecialLayerAxes(font)
@@ -273,7 +274,7 @@ condition_list, replacement_list = getConditionsFromOT(font)
 
 
 def removeSubsFromOT(font):
-	__doc__ = """Provided a font object, removes any variable conditional subsitutions"""
+	__doc__ = """Provided a font object, removes subsitutions in feature code"""
 	feature_index = None
 	for i, feature_itr in enumerate(font.features):
 		for line in feature_itr.code.splitlines():
@@ -299,7 +300,7 @@ def applyConditionsToRules(doc, condition_list, replacement_list):
 
 
 def getInstances(font):
-	__doc__ = """Provided a font object, provides a list of designspaceLib InstanceDescriptors"""
+	__doc__ = """Provided a font object, returns a list of designspaceLib InstanceDescriptors"""
 	instances_to_return = []
 	for instance in font.instances:
 		if not instance.active:
@@ -405,9 +406,10 @@ def generateMastersAtBraces(font, temp_ufo_folder):
 			brace_font.kerningVertical = {}
 		ufo_file_path = os.path.join(temp_ufo_folder, ufo_file_name)
 		exportSingleUFObyMaster(
-			brace_font.masters[0], ufo_file_path, brace_font.masters[0].name)
+			brace_font.masters[0], ufo_file_path)
 
 def fixStyleName(name,path):
+	__doc__ = """Provided a master name and its path, swaps the styleName attribute in fontinfo.plist for the master name. This is required by some plugins like ScaleFast."""
 	new_path = os.path.join(path, "fontinfo.plist")
 	f = open(new_path,'r', encoding="utf-8")
 	file_data = f.read()
@@ -417,13 +419,20 @@ def fixStyleName(name,path):
 	f.write(new_data)
 	f.close()
 
-def exportSingleUFObyMaster(master, dest, name):
+def exportSingleUFObyMaster(master, dest):
+	__doc__ = """Provided a master and destination path, exports a UFO"""
+	global use_production_names
+	global decompose_smart_stuff
+	global add_mastername_as_stylename
 	__doc__ = """Provided a master, destination, and name, exports a UFO file of that master"""
 	exporter = NSClassFromString('GlyphsFileFormatUFO').alloc().init()
 	exporter.setFontMaster_(master)
+	exporter.setConvertNames_(use_production_names)
+	exporter.setDecomposeSmartStuff_(decompose_smart_stuff)
 	print("Exporting master: %s - %s" % (master.font.familyName, master.name))
 	exporter.writeUfo_toURL_error_(master, NSURL.fileURLWithPath_(dest), None)
-	fixStyleName(master.name,dest)
+	if add_mastername_as_stylename:
+		fixStyleName(master.name,dest)
 
 
 def exportUFOMasters(font, dest):
@@ -433,7 +442,7 @@ def exportUFOMasters(font, dest):
 		file_name = "%s.glyphs" % font_name
 		ufo_file_name = file_name.replace('.glyphs', '.ufo')
 		ufo_file_path = os.path.join(dest, ufo_file_name)
-		exportSingleUFObyMaster(master, ufo_file_path, font_name)
+		exportSingleUFObyMaster(master, ufo_file_path)
 
 
 def main():

@@ -8,6 +8,7 @@ import re
 import os
 import tempfile
 import shutil
+from plistlib import FMT_XML, load, dump
 from AppKit import NSClassFromString, NSURL
 from fontTools.designspaceLib import (
 	DesignSpaceDocument, AxisDescriptor, SourceDescriptor, InstanceDescriptor, RuleDescriptor)
@@ -169,7 +170,7 @@ def getSpecialLayerAxes(font):
 	for layer in layers:
 		layer_axes = dict()
 		for i, coords in enumerate(layer.attributes['coordinates']):
-			layer_axes[font.axes[i].name] = layer.attributes['coordinates'][coords]
+			layer_axes[font.axes[i].name] = int(layer.attributes['coordinates'][coords])
 		if layer_axes not in special_layer_axes:
 			special_layer_axes.append(layer_axes)
 	return special_layer_axes
@@ -182,7 +183,7 @@ def getNonSpecialGlyphs(font, axes):
 		delete_glyph = True
 		for layer in glyph.layers:
 			if layer.isSpecialLayer and layer.attributes['coordinates']:
-				coords = list(layer.attributes['coordinates'].values())
+				coords = list(map(int,layer.attributes['coordinates'].values()))
 				if coords == axes:
 					delete_glyph = False
 		if delete_glyph:
@@ -411,13 +412,11 @@ def generateMastersAtBraces(font, temp_ufo_folder):
 def fixStyleName(name,path):
 	__doc__ = """Provided a master name and its path, swaps the styleName attribute in fontinfo.plist for the master name. This is required by some plugins like ScaleFast."""
 	new_path = os.path.join(path, "fontinfo.plist")
-	f = open(new_path,'r', encoding="utf-8")
-	file_data = f.read()
-	f.close()
-	new_data = re.sub(r'(<key>styleName</key>\n*\r*\s+<string>)(.*)?</string>',rf'\1{name}</string>', file_data)
-	f = open(new_path,'w', encoding="utf-8")
-	f.write(new_data)
-	f.close()
+	with open(new_path, "rb") as file:
+		pl = load(file)
+		pl["styleName"] = name
+	with open(new_path, "wb") as file:
+		dump(pl,file,fmt=FMT_XML)
 
 def exportSingleUFObyMaster(master, dest):
 	__doc__ = """Provided a master and destination path, exports a UFO"""

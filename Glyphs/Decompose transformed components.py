@@ -1,6 +1,6 @@
 # MenuTitle: Decompose transformed components
 __doc__ = """
-Removes overlaps and writes binaries. Edit this script to change formats and paths.
+Decomposes transformed components in all master layers in all glyphs
 """
 			
 transformed_components = []

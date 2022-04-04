@@ -29,9 +29,9 @@ decompose_smart_stuff = True # Not sure what happens if this is set to False. Go
 add_mastername_as_stylename = True # Needed for ScaleFast and potentially other Robofont plugins
 add_build_script = True # adds a minimal build script to the output dir
 
-# if you want
-to_decompose = "Dzhe-cy Geupturn-cy dzhe-cy geupturn-cy tse-cy dhe-cy tetse-cy Tse-cy Dhe-cy Tetse-cy upArrow.small Ohorntilde ohorntilde rightArrow.small downArrow.small leftArrow.small upArrow.smallWhite rightArrow.smallWhite downArrow.smallWhite leftArrow.smallWhite A.small B.small C.small D.small E.small F.small G.small H.small I.small J.small K.small L.small M.small N.small O.small P.small Q.small R.small R.small.ss03 S.small T.small U.small V.small W.small X.small Y.small Z.small A.smallWhite B.smallWhite C.smallWhite D.smallWhite E.smallWhite F.smallWhite G.smallWhite H.smallWhite I.smallWhite J.smallWhite K.smallWhite L.smallWhite M.smallWhite N.smallWhite O.smallWhite P.smallWhite Q.smallWhite R.smallWhite R.smallWhite.ss03 S.smallWhite T.smallWhite U.smallWhite V.smallWhite W.smallWhite X.smallWhite Y.smallWhite Z.smallWhite zero.smallWhite one.smallWhite two.smallWhite three.smallWhite four.smallWhite five.smallWhite six.smallWhite seven.smallWhite eight.smallWhite nine.smallWhite six.smallWhite.ss06 nine.smallWhite.ss06 upArrow.smallWhite rightArrow.smallWhite downArrow.smallWhite leftArrow.smallWhite zero.dnom one.dnom two.dnom three.dnom four.dnom five.dnom six.dnom six.dnom.ss06 seven.dnom eight.dnom nine.dnom nine.dnom.sso6 six.sinf.ss06 nine.sinf.ss06 period, colon semicolon ellipsis exclam exclamdown question questiondown periodcentered bullet asterisk numbersign slash backslash periodcentered.case periodcentered.loclCAT period.ss10 comma.ss10 colon.ss10 semicolon.ss10 ellipsis.ss10 exclam.ss10 exclamdown.ss10 question.ss10 questiondown.ss10 periodcentered.ss10 bullet.ss10 periodcentered.loclCAT.case periodcentered.case.ss10 periodcentered.loclCAT.ss10 periodcentered.loclCAT.case.ss10  hyphen endash emdash hyphentwo underscore parenleft parenright braceleft braceright bracketleft bracketright quotesinglbase quotedblbase quotedblleft quotedblright quoteleft quoteright quotedbl quotesingle quotesinglbase.ss10 quotedblbase.ss10 quotedblleft.ss10 quotedblright.ss10 quoteleft.ss10 quoteright.ss10 brevecomb_acutecomb brevecomb_gravecomb brevecomb_hookabovecomb brevecomb_tildecomb circumflexcomb_acutecomb circumflexcomb_gravecomb circumflexcomb_hookabovecomb circumflexcomb_tildecomb brevecomb-cy ̈̇̀́̋ caroncomb.alt circumflexcomb caroncomb brevecomb ringcomb tildecomb macroncomb hookabovecomb candraBinducomb commaturnedabovecomb dotbelowcomb dieresisbelowcomb ringbelowcomb commaaccentcomb cedillacomb ogonekcomb brevebelowcomb macronbelowcomb strokeshortcomb strokelongcomb doublemacronbelowcomb dieresis dotaccent grave acute hungarumlaut circumflex caron breve ring tilde macron strokeshortcomb.case  caroncomb.alt.loclCSYSKY gravecomb.loclVIT acutecomb.loclVIT circumflexcomb.loclVIT brevecomb.loclVIT tildecomb.loclVIT dieresiscomb.ss10 dieresiscomb.case dieresiscomb.ss10.case dotaccentcomb.ss10 candraBinducomb.ss10 commaturnedabovecomb.ss10 dotbelowcomb.ss10 commaaccentcomb.ss10 exclamdotless ligstrokecomb lowerhookcomb ordcomb questiondotless spike-cy spikebar-cy spikecenter-cy spikedescender-cy tittle lowerhookcomb.case shortstrokecomb.case spike-cy.case spikebar-cy.case spikecenter-cy.case spikedescender-cy.case daggerdbl daggerdbl.sup currency leftRightArrow upDownArrow reversecommamod reversecommamod.ss10 apostrophemod commareversedmod commaturnedmod primemod commareversedmod.ss10 commaturnedmod.ss10 ringhalfleft  dieresiscomb.case dotaccentcomb.case gravecomb.case acutecomb.case hungarumlautcomb.case caroncomb.alt.case circumflexcomb.case circumflexcomb_gravecomb.case circumflexcomb_acutecomb.case circumflexcomb_tildecomb.case circumflexcomb_hookabovecomb.case caroncomb.case brevecomb.case brevecomb_gravecomb.case brevecomb_acutecomb.case brevecomb_tildecomb.case brevecomb_hookabovecomb.case ringcomb.case tildecomb.case macroncomb.case hookabovecomb.case commaturnedabovecomb.case  dotbelowcomb.case dieresisbelowcomb.case ringbelowcomb.case commaaccentcomb.case cedillacomb.case ogonekcomb.case brevebelowcomb.case macronbelowcomb.case strokeshortcomb.case slashlongcomb.case doublemacronbelowcomb.case ogonekcomb.flat.case caroncomb.alt.loclCSYSKY.case dieresiscomb.loclUKR.case gravecomb.loclVIT.case acutecomb.loclVIT.case circumflexcomb.loclVIT.case brevecomb.loclVIT.case tildecomb.loclVIT.case macroncomb.narrow.case dieresiscomb.ss10.case dotaccentcomb.ss10.case dotaccentcomb.case.loclVIT dieresiscomb.ss10.loclUKR.case dieresiscomb.loclUKR.narrow.case tildecomb.loclVIT.case.left dotaccentcomb.ss10.case.loclVIT upArrow.circled rightArrow.circled downArrow.circled leftArrow.circled upArrow.blackCircled rightArrow.blackCircled downArrow.blackCircled leftArrow.blackCircled   brevecomb_acutecomb  brevecomb_gravecomb  brevecomb_hookabovecomb  brevecomb_tildecomb  circumflexcomb_acutecomb  circumflexcomb_gravecomb  circumflexcomb_hookabovecomb  circumflexcomb_tildecomb  circumflexcomb_gravecomb.case  circumflexcomb_acutecomb.case  circumflexcomb_tildecomb.case  circumflexcomb_hookabovecomb.case  brevecomb_gravecomb.case  brevecomb_acutecomb.case  brevecomb_tildecomb.case  brevecomb_hookabovecomb.case".split(" ")
-to_remove_overlap = "upArrow.small rightArrow.small downArrow.small leftArrow.small A.smallWhite B.smallWhite C.smallWhite D.smallWhite E.smallWhite F.smallWhite G.smallWhite H.smallWhite I.smallWhite J.smallWhite K.smallWhite L.smallWhite M.smallWhite N.smallWhite O.smallWhite P.smallWhite Q.smallWhite R.smallWhite R.smallWhite.ss03 S.smallWhite T.smallWhite U.smallWhite V.smallWhite W.smallWhite X.smallWhite Y.smallWhite Z.smallWhite zero.smallWhite one.smallWhite two.smallWhite three.smallWhite four.smallWhite five.smallWhite six.smallWhite seven.smallWhite eight.smallWhite nine.smallWhite six.smallWhite.ss06 nine.smallWhite.ss06 upArrow.smallWhite rightArrow.smallWhite downArrow.smallWhite leftArrow.smallWhite leftArrow.blackCircled rightArrow.blackCircled upArrow.blackCircled downArrow.blackCircled".split(" ")
+# if you want, make an array of glyphnames (not unicodes)
+to_decompose = []
+to_remove_overlap = []
 
 ### Careful editing beyond here! 
 
@@ -202,14 +202,15 @@ def alignSpecialLayers(font):
 
 
 def getSources(font,format):
+    global to_build
     __doc__ = """Provided a font object, creates and returns a list of designspaceLib SourceDescriptors"""
     sources = []
     for i, master in enumerate(font.masters):
         s = SourceDescriptor()
-        if hasVariableFamilyName(font):
-            font_name = getFamilyNameWithMaster(font, master,format)
+        if hasVariableFamilyName(font) and not to_build["static"]:
+            font_name = getFamilyName(font,format)
         else:
-            font_name = getFamilyNameWithMaster(font, master,"static")
+            font_name = getFamilyName(font,"static")
         s.filename = "masters/%s.ufo" % font_name
         s.familyName = getFamilyName(font,format)
         s.styleName = master.name
@@ -577,14 +578,14 @@ def main():
             variable_designspace_doc.write(variable_designspace_path)
         print("Building UFOs for masters...")
         # We only need one set of masters
-        if to_build["static"] and not to_build["variable"]:
-            exportUFOMasters(font, temp_project_folder, "static")
-            print("Building UFOs for brace layers if present...")
-            generateMastersAtBraces(font, temp_project_folder, "static")
-        else:
+        if to_build["variable"] and not to_build["static"]:
             exportUFOMasters(font, temp_project_folder, "variable")
             print("Building UFOs for brace layers if present...")
             generateMastersAtBraces(font, temp_project_folder, "variable")
+        else:
+            exportUFOMasters(font, temp_project_folder, "static")
+            print("Building UFOs for brace layers if present...")
+            generateMastersAtBraces(font, temp_project_folder, "static")
 
         for file in glob.glob(os.path.join(temp_project_folder,"*.ufo")):
             shutil.move(file,master_dir)

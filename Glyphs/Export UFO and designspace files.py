@@ -183,11 +183,12 @@ def getStyleNameWithAxis(font, axes):
 
 
 def getNameWithAxis(font, axes, format):
+    global to_build
     __doc__ = """Provided a font and a dict of axes for a brace layer, returns a font family name"""
-    if format =="static":
-        font_name = "%s -" % (font.familyName)
+    if not to_build["static"]:
+        font_name = "%s -" % getVariableFontFamily(font)
     else:
-        font_name = "%s -" % (getVariableFontFamily(font))
+        font_name = "%s -" % (font.familyName)
     for i, axis in enumerate(axes):
         font_name = "%s %s %s" % (font_name, font.axes[i].name, axis)
     return font_name

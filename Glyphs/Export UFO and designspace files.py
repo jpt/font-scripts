@@ -208,9 +208,9 @@ def getSources(font,format):
     for i, master in enumerate(font.masters):
         s = SourceDescriptor()
         if hasVariableFamilyName(font) and not to_build["static"]:
-            font_name = getFamilyName(font,format)
+            font_name = getFamilyNameWithMaster(font, master,"variable")
         else:
-            font_name = getFamilyName(font,"static")
+            font_name = getFamilyNameWithMaster(font, master,"static")
         s.filename = "masters/%s.ufo" % font_name
         s.familyName = getFamilyName(font,format)
         s.styleName = master.name

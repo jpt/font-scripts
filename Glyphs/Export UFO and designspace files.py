@@ -574,7 +574,6 @@ def main():
         if to_build["variable"] and hasVariableFamilyName(font):
             variable_designspace_doc = getDesignSpaceDocument(font, "variable")
             variable_designspace_path = "%s/%s.designspace" % (temp_project_folder, getFamilyName(font, "variable"))
-            print(variable_designspace_path)
             variable_designspace_doc.write(variable_designspace_path)
         print("Building UFOs for masters...")
         # We only need one set of masters

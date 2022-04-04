@@ -566,15 +566,17 @@ def main():
             static_designspace_doc.write(static_designspace_path)
         if to_build["variable"] and hasVariableFamilyName(font):
             variable_designspace_doc = getDesignSpaceDocument(font, "variable")
-            variable_designspace_path = "%s/%s.designspace" % (temp_project_folder, getFamilyName(font, "variable"))
+            variable_designspace_path = "%s/%s.designspace" % (temp_project_folder, getFamilyName(font, "variable").replace(" ", ""))
             variable_designspace_doc.write(variable_designspace_path)
         print("Building UFOs for masters...")
         # We only need one set of masters
+        print("here at least")
         if to_build["variable"] and not to_build["static"]:
             exportUFOMasters(font, temp_project_folder, "variable")
             print("Building UFOs for brace layers if present...")
             generateMastersAtBraces(font, temp_project_folder, "variable")
         else:
+            print("here at least 2")
             exportUFOMasters(font, temp_project_folder, "static")
             print("Building UFOs for brace layers if present...")
             generateMastersAtBraces(font, temp_project_folder, "static")

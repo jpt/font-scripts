@@ -43,17 +43,16 @@ def addBuildScript(font,dest):
     static_font_name = getFamilyName(font,"static").replace(" ", "\ ")
     vf_font_name = getFamilyName(font,"variable").replace(" ", "\ ")
     build_script = f"""#!/bin/bash
-python3 -m fontmake -m ../{vf_font_name}.designspace -o variable --output-dir ../build/vf
-python3 -m fontmake -i -m ../{static_font_name}.designspace -o ttf --output-dir ../build/ttf
-python3 -m fontmake -i -m ../{static_font_name}.designspace -o otf --output-dir ../build/otf
+python3 -m fontmake -m {vf_font_name}.designspace -o variable --output-dir build/vf
+python3 -m fontmake -i -m {static_font_name}.designspace -o ttf --output-dir build/ttf
+python3 -m fontmake -i -m {static_font_name}.designspace -o otf --output-dir build/otf
 """
-    def makeScript(script,type):
-        script_name =  os.path.join(dest,type + ".sh")
-        f = open(script_name, "w")
-        f.write(script)
-        f.close()
-        subprocess.run(["chmod","+x",script_name])
-    makeScript(build_script, "build")
+    script_name =  os.path.join(dest,"build.sh")
+    f = open(script_name, "w")
+    f.write(build_script)
+    f.close()
+    subprocess.run(["chmod","+x",script_name])
+
 
 def decomposeGlyphs(font):
     __doc__ = """Provided a font object, decomposes glyphs defined in to_decompose"""
@@ -583,14 +582,8 @@ def main():
         for file in glob.glob(os.path.join(temp_project_folder,"*.ufo")):
             shutil.move(file,master_dir)
         if add_build_script:
-            script_dir = os.path.join(temp_project_folder,"scripts")
-            if os.path.exists(script_dir):
-                shutil.rmtree(script_dir)
-            else:
-                os.mkdir(script_dir)
             addBuildScript(font,temp_project_folder)
-            for file in glob.glob(os.path.join(temp_project_folder,"*.sh")):
-                shutil.move(file, script_dir)
+
 
         # copy from temp dir to the destination. after this, tempfile will automatically delete the temp files
         shutil.copytree(temp_project_folder, dest)

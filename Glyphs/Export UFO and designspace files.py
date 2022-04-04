@@ -47,13 +47,6 @@ python3 -m fontmake -m ../{vf_font_name}.designspace -o variable --output-dir ..
 python3 -m fontmake -i -m ../{static_font_name}.designspace -o ttf --output-dir ../build/ttf
 python3 -m fontmake -i -m ../{static_font_name}.designspace -o otf --output-dir ../build/otf
 """
-    make_woff_script ="""#!/bin/bash"
-woff2_compress ../build/vf/*.ttf
-woff2_compress ../build/ttf/*.ttf
-mkdir ../build/woff
-mv ../build/vf/*.woff2 ../build/woff
-mv ../build/ttf/*.woff2 ../build/woff
-"""
     def makeScript(script,type):
         script_name =  os.path.join(dest,type + ".sh")
         f = open(script_name, "w")
@@ -61,7 +54,6 @@ mv ../build/ttf/*.woff2 ../build/woff
         f.close()
         subprocess.run(["chmod","+x",script_name])
     makeScript(build_script, "build")
-    makeScript(make_woff_script, "woff")
 
 def decomposeGlyphs(font):
     __doc__ = """Provided a font object, decomposes glyphs defined in to_decompose"""

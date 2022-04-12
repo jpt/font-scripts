@@ -50,21 +50,21 @@ else:
 			condition_index = condition_index + 1
 		elif line.startswith("sub"):	
 			m = re.findall("sub (.*) by (.*);", line)[0]
-			replace = m[0] + "=" + m[1]
-			try:
-				replacement_list[condition_index-1].append(replace)
-			except:
-				replacement_list.append(list())
-				replacement_list[condition_index-1].append(replace)
-		
-	for instance in Font.instances:
-		for n,axis in enumerate(instance.axes):
-			axis_tag = Font.axes[n].axisTag
-			conditions_met = 0
-			for i,sub_list in enumerate(condition_list):
-				conditions_to_meet = len(condition_list[i])	
-				condition_met = 0
-				for sub in sub_list:
+			if " " not in m[0] and " " not in m[1]:
+				replace = m[0] + "=" + m[1]
+				try:
+					replacement_list[condition_index-1].append(replace)
+				except:
+					replacement_list.append(list())
+					replacement_list[condition_index-1].append(replace)
+
+	for x in range(0,len(condition_list)):
+		for instance in Font.instances:
+			for n,axis in enumerate(instance.axes):
+				axis_tag = Font.axes[n].axisTag
+				conditions_to_meet = len(condition_list[x]) -1
+				conditions_met = 0
+				for i,sub in enumerate(condition_list[x]):
 					if(sub['tag'] == axis_tag):
 						if sub['axis_range'][1] == "nomax":
 							if axis > sub['axis_range'][0]:
@@ -73,8 +73,8 @@ else:
 						else:
 							if sub['axis_range'][0] <= axis <= sub['axis_range'][1]:
 								conditions_met = conditions_met + 1
-				if conditions_met == conditions_to_meet:
-					print("Subbing %s in instance %s" % (replacement_list[i],instance))
-					instance.customParameters['Rename Glyphs'] = tuple(replacement_list[i])
-					conditions_met = 0
-					continue
+					if conditions_met == conditions_to_meet:
+						print("Subbing %s in instance %s" % (replacement_list[i],instance))
+						instance.customParameters['Rename Glyphs'] = tuple(replacement_list[i])
+						conditions_met = 0
+						continue

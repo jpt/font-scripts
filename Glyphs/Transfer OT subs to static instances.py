@@ -50,31 +50,40 @@ else:
 			condition_index = condition_index + 1
 		elif line.startswith("sub"):	
 			m = re.findall("sub (.*) by (.*);", line)[0]
-			if " " not in m[0] and " " not in m[1]:
-				replace = m[0] + "=" + m[1]
-				try:
-					replacement_list[condition_index-1].append(replace)
-				except:
-					replacement_list.append(list())
-					replacement_list[condition_index-1].append(replace)
-
-	for x in range(0,len(condition_list)):
+			replace = m[0] + "=" + m[1]
+			try:
+				replacement_list[condition_index-1].append(replace)
+			except:
+				replacement_list.append(list())
+				replacement_list[condition_index-1].append(replace)
+	
+	replace_instances = []
+	for i in range(0,len(condition_list)):
+		replace_instances.append([])
+		
+	for ri, replacement in enumerate(replacement_list):
+		conditions = condition_list[ri]
 		for instance in Font.instances:
-			for n,axis in enumerate(instance.axes):
-				axis_tag = Font.axes[n].axisTag
-				conditions_to_meet = len(condition_list[x]) -1
-				conditions_met = 0
-				for i,sub in enumerate(condition_list[x]):
-					if(sub['tag'] == axis_tag):
-						if sub['axis_range'][1] == "nomax":
-							if axis > sub['axis_range'][0]:
-								conditions_met = conditions_met + 1
-								
-						else:
-							if sub['axis_range'][0] <= axis <= sub['axis_range'][1]:
-								conditions_met = conditions_met + 1
-					if conditions_met == conditions_to_meet:
-						print("Subbing %s in instance %s" % (replacement_list[i],instance))
-						instance.customParameters['Rename Glyphs'] = tuple(replacement_list[i])
-						conditions_met = 0
-						continue
+			if instance.type == 0:
+				count = 0
+				for x,ins_axis_val in enumerate(instance.axes):
+					axis_tag = Font.axes[x].axisTag
+					for condition in conditions:
+						if condition['tag'] == axis_tag:
+							if condition['axis_range'][1] == 'nomax':
+								if ins_axis_val > condition['axis_range'][0]:
+									count = count + 1
+							else:
+								if condition['axis_range'][0] <= ins_axis_val <= condition['axis_range'][1]:
+									count = count + 1
+				if count == len(conditions):
+					replace_instances[ri].append(instance)
+					
+
+	for i,instance_list in enumerate(replace_instances):
+		for instance in instance_list:
+			print("Subbing %s in instance %s" % (replacement_list[i],instance.preferredFamily + " " + instance.name))
+			try:
+				instance.customParameters['Rename Glyphs'] = instance.customParameters['Rename Glyphs'] + tuple(replacement_list[i])
+			except:
+				instance.customParameters['Rename Glyphs'] = tuple(replacement_list[i])

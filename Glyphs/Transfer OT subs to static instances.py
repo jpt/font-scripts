@@ -56,14 +56,14 @@ else:
 			except:
 				replacement_list.append(list())
 				replacement_list[condition_index-1].append(replace)
-	
-				
+		
 	for instance in Font.instances:
 		for n,axis in enumerate(instance.axes):
 			axis_tag = Font.axes[n].axisTag
-			conditions_to_meet = len(condition_list)
 			conditions_met = 0
-			for i,sub_list in enumerate(condition_list):		
+			for i,sub_list in enumerate(condition_list):
+				conditions_to_meet = len(condition_list[i])	
+				condition_met = 0
 				for sub in sub_list:
 					if(sub['tag'] == axis_tag):
 						if sub['axis_range'][1] == "nomax":

@@ -14,7 +14,8 @@ from fontTools.designspaceLib import AxisDescriptor
 from fontTools.designspaceLib import SourceDescriptor
 from fontTools.designspaceLib import InstanceDescriptor
 from fontTools.designspaceLib import RuleDescriptor
-#from fontTools.designspaceLib import AxisLabelDescriptor todo
+from fontTools.designspaceLib import AxisLabelDescriptor
+#from fontTools.designspaceLib import LocationLabelDescriptor todo
 import glob
 import subprocess
 from fontParts.world import NewFont
@@ -114,6 +115,7 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 			if max == None or coord > max:
 				max = coord
 	return [min, max]
+
 
 
 def getOriginMaster(font):
@@ -245,6 +247,7 @@ def addSources(doc, sources):
 		doc.addSource(source)
 
 
+
 def getSpecialLayers(font):
 	__doc__ = """Provided a font object, returns a list of GSLayers that are brace layers (have intermediate master coordinates)."""
 
@@ -315,7 +318,7 @@ def getAxisMap(font):
 	else:
 		return None
 
-def addAxes(doc, font):
+def addAxes(doc, font, format):
 	__doc__ = """Provided a designspace doc and a font object, adds axes from that font to the designspace as AxisDescriptors"""
 	for i, axis in enumerate(font.axes):
 		if font.customParameters["Axis Mappings"]:
@@ -344,13 +347,35 @@ def addAxes(doc, font):
 			a.name = axis.name
 			a.tag = axis.axisTag
 
-			# todo:
-
-			#a.labelNames
-
-			# a.axisLabels = [
-			# 	AxisLabelDescriptor(name="Regular", userValue=400, elidable=True)
-			# ]
+			# stat labels
+			if(format == "variable"):
+				axis_list = list(axis_map.items())
+				stat_dict = dict()
+				for instance in font.instances:
+					elidable = False
+					if instance.customParameters["Style Name as STAT entry"]:
+						tag = instance.customParameters["Style Name as STAT entry"]
+						if tag == axis.axisTag:
+							if instance.variableStyleName:
+								name = instance.variableStyleName
+							else:
+								name = instance.name
+							if name not in stat_dict.keys():
+								if instance.customParameters["Elidable STAT Axis Value Name"]:
+									elidable_tag = instance.customParameters["Elidable STAT Axis Value Name"]
+									if elidable_tag == axis.axisTag:
+										elidable = True
+								
+								stat_dict[name] = dict(userValue=axis_map[instance.axes[i]],elidable=elidable)
+			
+				if len(stat_dict.items()):
+					for name,s in stat_dict.items():
+						user_min = axis_list[0][1]
+						user_max = axis_list[-1][1]
+						print(user_min,user_max)
+						a.axisLabels.append(
+							AxisLabelDescriptor(name=name, userMinimum=user_min, userMaximum=user_max, userValue=s["userValue"],elidable=s["elidable"])
+						)
 
 			doc.addAxis(a)
 
@@ -460,10 +485,17 @@ def getInstances(font, format):
 		ins.postScriptFontName = postScriptName
 		ins.styleMapFamilyName = instance.preferredFamily
 		ins.styleMapStyleName = style_map_style
-		axis_name = {}
+		design_location = {}
 		for i, axis_value in enumerate(instance.axes):
-			axis_name[font.axes[i].name] = axis_value
-		ins.location = axis_name
+			design_location[font.axes[i].name] = axis_value
+		ins.designLocation = design_location
+		
+		axis_map = getAxisMap(font)
+		user_location = {}
+		for i, axis_value in enumerate(instance.axes):
+			user_location[font.axes[i].name] = axis_map[font.axes[i].axisTag][axis_value]
+		ins.userLocation = user_location
+
 		instances_to_return.append(ins)
 	return instances_to_return
 
@@ -480,17 +512,29 @@ def updateFeatures(font):
 		if feature.automatic:
 			feature.update()
 
+# todo
+
+# def getLabels(font,format):
+# 	l = LocationLabelDescriptor()
+
+
+#def addLabels(doc, labels):
+
+	
 
 def getDesignSpaceDocument(font, format):
 	__doc__ = """Returns a designspaceLib DesignSpaceDocument populated with informated from the provided font object"""
 	doc = DesignSpaceDocument()
-	addAxes(doc, font)
+	addAxes(doc, font, format)
 	sources = getSources(font, format)
 	addSources(doc, sources)
 	special_sources = getSpecialSources(font, format)
 	addSources(doc, special_sources)
 	instances = getInstances(font, format)
 	addInstances(doc, instances)
+	#todo
+	# labels = getLabels(font, format)
+	# addLabels(doc, labels)
 	condition_list, replacement_list = getConditionsFromOT(font)
 	applyConditionsToRules(doc, condition_list, replacement_list)
 	return doc
@@ -860,7 +904,6 @@ def main():
 
 		# generate a designspace file based on metadata in the copy of the open font
 		print("Building variable designspace from font metadata...")
-		designspace_doc = getDesignSpaceDocument(font, "variable")
 		print("Building static designspace from font metadata...")
 		if to_build["static"] or (to_build["variable"] and not hasVariableFamilyName(font)):
 			static_designspace_doc = getDesignSpaceDocument(font, "static")

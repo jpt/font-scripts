@@ -711,7 +711,9 @@ def addKerning(font, ufo):
 def addFeatureInclude(ufo, font):
 	__doc__ = """Provided a fontParts UFO master, add feature includes for classes and individual features."""
 	features = getFeatureDict(font)
-	feature_str = "include(../features/classes.fea);\n"
+	feature_str = """include(../features/prefixes.fea);
+include(../features/classes.fea);
+"""
 	nl = "\n"
 	for feature in features.keys():
 		# sizes we'll have to add to individual fonts
@@ -779,9 +781,9 @@ def getFeatureDict(font):
 			else:
 				size_str = size_str + " " + size_params[i]
 		size_str = size_str + ";\n"
-		size_str = size_str + f"""    sizemenuname "{size_params[-1]}";\n"""
-		size_str = size_str + f"""    sizemenuname 1 "{size_params[-1]}";\n"""
-		size_str = size_str + f"""    sizemenuname 1 21 0 "{size_params[-1]}";\n"""
+		size_str = size_str + f"""    sizemenuname "{size_params[-1]}";{nl}"""
+		size_str = size_str + f"""    sizemenuname 1 "{size_params[-1]}";{nl}"""
+		size_str = size_str + f"""    sizemenuname 1 21 0 "{size_params[-1]}";{nl}"""
 		size_str = size_str + "} size;"
 		key = "size_" + size_params[-1]
 		features[key] = size_str
@@ -802,7 +804,15 @@ def writeFeatureFiles(font, dest):
 		f.write(f_code)
 		f.close()
 
-	# prefixes todo
+	# prefixes
+	prefixes = ""
+	for prefix in font.featurePrefixes:
+		prefixes = prefixes + prefix.code + "\n"
+	prefixes.strip()
+	p_dest = os.path.join(dest, feature_dir, "prefixes.fea")
+	f = open(p_dest, "w")
+	f.write(prefixes)
+	f.close()
 
 	# classes
 	font_classes = ""
@@ -810,6 +820,7 @@ def writeFeatureFiles(font, dest):
 	for font_class in font.classes:
 		font_classes = font_classes + \
 			f"""@{font_class.name} = [{font_class.code.strip()}];{nl}{nl}"""
+	font_classes.strip()
 	c_dest = os.path.join(dest, feature_dir, "classes.fea")
 	f = open(c_dest, "w")
 	f.write(font_classes)

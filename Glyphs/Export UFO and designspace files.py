@@ -1,6 +1,6 @@
 # MenuTitle: Export UFO and designspace files
 __doc__ = """
-Exports UFO and designspace files. Supports substitutions defined in OT features, but not bracket layers. Brace layers supported, but not yet as "support layers" for Skateboard. STAT tables coming soon. Thanks to Rafał Buchner, Joancarles Casasín (https://robofont.com/documentation/how-tos/converting-from-glyphs-to-ufo/), and to the authors and maintainers of designspaceLib and fontParts.
+Exports UFO and designspace files. Supports substitutions defined in OT features, but not bracket layers. Brace layers supported, but not yet as "support layers" for Skateboard. Thanks to Rafał Buchner, Joancarles Casasín (https://robofont.com/documentation/how-tos/converting-from-glyphs-to-ufo/), and to the authors and maintainers of designspaceLib and fontParts.
 """
 
 from GlyphsApp import GSInstance
@@ -26,12 +26,13 @@ from fontParts.fontshell.anchor import RAnchor
 from fontParts.fontshell.guideline import RGuideline
 
 # Todo:
+# - One designspace for VF? Have to look into designspace 5 spec more closely
 # - Add support for font-level layers (instead of multiple UFOs for brace layers)
 # - Add support for bracket layers (in addition to OT based subs, which are already supported)
 # - Copy Glyph-level layers over (but this is potentially a non-goal)
 # - Mayyyyyvbe add support for production names (this might be really hard because of features, and fontmake does it, so who cares?)
 # - Decompose smart stuff
-# - Glyphs hints to VTT Talk? 
+# - Glyphs hints to VTT Talk? Maybe too insane
 
 class ExportUFOAndDesignspace(object):
 	def __init__(self):

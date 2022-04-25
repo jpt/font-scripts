@@ -824,9 +824,21 @@ class ExportUFOAndDesignspace(object):
 			if info.key == "vendorID":
 				ufo.info.openTypeOS2VendorID = info.value
 		ufo.info.note = font.note #idk, maybe not?
+		
 		# todo
+		#
+		# hints
+		#
 		#ufo.info.postscriptStemSnapH = 
 		#ufo.info.postscriptStemSnapV = 
+		#ufo.info.postscriptBlueValues = 
+		#ufo.info.postscriptOtherBlues = 
+		#ufo.info.postscriptFamilyBlues = 
+		#ufo.info.postscriptFamilyOtherBlues = 
+		#ufo.info.postscriptBlueFuzz = 
+		#ufo.info.postscriptBlueShift = 
+		#ufo.info.postscriptBlueScale = 
+		#ufo.info.postscriptForceBold = 
 
 		# metrics
 		ufo.info.unitsPerEm = font.upm

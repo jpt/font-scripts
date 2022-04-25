@@ -17,7 +17,7 @@ from fontTools.designspaceLib import AxisDescriptor
 from fontTools.designspaceLib import SourceDescriptor
 from fontTools.designspaceLib import InstanceDescriptor
 from fontTools.designspaceLib import RuleDescriptor
-#from fontTools.designspaceLib import AxisLabelDescriptor todo - implemented below but commented out / need to doublecheck
+# from fontTools.designspaceLib import AxisLabelDescriptor - todo, implemented below but need to test
 #from fontTools.designspaceLib import LocationLabelDescriptor todo
 from fontParts.world import NewFont
 from fontParts.fontshell.contour import RContour
@@ -104,6 +104,7 @@ class ExportUFOAndDesignspace( object ):
 	def exportButton(self, sender):
 		self.to_decompose = self.w.decomposeField.get().split(" ")
 		self.to_remove_overlap = self.w.overlapField.get().split(" ")
+		self.w.status.set(("Exporting %s" % Glyphs.font.familyName) + "\n" + self.w.status.get())
 		self.main()
 	
 	def buttonSelectBuildCallback(self, sender):
@@ -414,7 +415,7 @@ class ExportUFOAndDesignspace( object ):
 				a.tag = axis.axisTag
 
 				# stat labels todo - make sure this is correct (or if instead of per all instances we just want e.g. the weight range for weights?)
-				#
+			
 				# if(format == "variable"):
 				# 	axis_list = list(axis_map.items())
 				# 	stat_dict = dict()
@@ -966,14 +967,14 @@ class ExportUFOAndDesignspace( object ):
 			self.removeSubsFromOT(font)
 
 			# generate a designspace file based on metadata in the copy of the open font
-			self.w.status.set(("Building variable designspace from font metadata...") + "\n" + self.w.status.get())
-			self.w.status.set(("Building static designspace from font metadata...") + "\n" + self.w.status.get())
 			if self.to_build["static"] or (self.to_build["variable"] and not self.hasVariableFamilyName(font)):
+				self.w.status.set(("Building designspace from font metadata...") + "\n" + self.w.status.get())
 				static_designspace_doc = self.getDesignSpaceDocument(font, "static")
 				static_designspace_path = "%s/%s.designspace" % (
 					temp_project_folder, self.getFamilyName(font, "static"))
 				static_designspace_doc.write(static_designspace_path)
 			if self.to_build["variable"] and self.hasVariableFamilyName(font):
+				self.w.status.set(("Building variable designspace from font metadata...") + "\n" + self.w.status.get())
 				variable_designspace_doc = self.getDesignSpaceDocument(font, "variable")
 				variable_designspace_path = "%s/%s.designspace" % (
 					temp_project_folder, self.getFamilyName(font, "variable").replace(" ", ""))

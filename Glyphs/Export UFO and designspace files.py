@@ -824,6 +824,9 @@ class ExportUFOAndDesignspace(object):
 			if info.key == "vendorID":
 				ufo.info.openTypeOS2VendorID = info.value
 		ufo.info.note = font.note #idk, maybe not?
+		# todo
+		#ufo.info.postscriptStemSnapH = 
+		#ufo.info.postscriptStemSnapV = 
 
 		# metrics
 		ufo.info.unitsPerEm = font.upm
@@ -833,6 +836,9 @@ class ExportUFOAndDesignspace(object):
 		ufo.info.capHeight = master.capHeight
 		ufo.info.ascender = master.ascender
 		ufo.info.italicAngle = master.italicAngle
+		# todo
+		#ufo.info.widthValue = 
+		#ufo.info.weightValue = 
 
 		# metrics in custom params
 		ufo.info.openTypeOS2WinAscent = int(master.customParameters["winAscent"])

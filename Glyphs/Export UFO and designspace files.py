@@ -17,7 +17,7 @@ from fontTools.designspaceLib import AxisDescriptor
 from fontTools.designspaceLib import SourceDescriptor
 from fontTools.designspaceLib import InstanceDescriptor
 from fontTools.designspaceLib import RuleDescriptor
-from fontTools.designspaceLib import AxisLabelDescriptor # todo, make sure it's actually implemented right lol
+from fontTools.designspaceLib import AxisLabelDescriptor
 from fontTools.designspaceLib import LocationLabelDescriptor
 from fontParts.world import NewFont
 from fontParts.fontshell.contour import RContour
@@ -27,9 +27,9 @@ from fontParts.fontshell.guideline import RGuideline
 
 # Todo:
 # - Add support for font-level layers (instead of multiple UFOs for brace layers)
-# - Add support for bracket layers (in addition to OT based subs)
-# - Copy Glyph-level layers for non-master layers (but potentially a non-goal)
-# - Add support for production names
+# - Add support for bracket layers (in addition to OT based subs, which are already supported)
+# - Copy Glyph-level layers over (but this is potentially a non-goal)
+# - Mayyyyyvbe add support for production names (this might be really hard because of features, and fontmake does it, so who cares?)
 # - Decompose smart stuff
 # - Glyphs hints to VTT Talk? 
 
@@ -354,17 +354,9 @@ class ExportUFOAndDesignspace(object):
 			for x, axis in enumerate(master.axes):
 				locations[font.axes[x].name] = axis
 			s.designLocation = locations
-			# deprecated in dsLib 5
-			# origin_master_id = self.getOriginMaster(font)
-			# if master.id == origin_master_id:
-			# 	s.copyLib = True
-			# 	s.copyFeatures = True
-			# 	s.copyGroups = True
-			# 	s.copyInfo = True
 			s.mutedGlyphNames = self.getMutedGlyphs(font)
 			sources.append(s)
 		return sources
-
 
 	def addSources(self, doc, sources):
 		__doc__ = """Provided a designspace document and array of source descriptors, adds those sources to the designspace doc."""
@@ -824,7 +816,7 @@ class ExportUFOAndDesignspace(object):
 			if info.key == "vendorID":
 				ufo.info.openTypeOS2VendorID = info.value
 		ufo.info.note = font.note #idk, maybe not?
-		
+
 		# todo
 		#
 		# hints

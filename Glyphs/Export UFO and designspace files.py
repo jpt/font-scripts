@@ -449,6 +449,7 @@ class ExportUFOAndDesignspace(object):
 
 
 	def getLabels(self,font,format):
+		__doc__ = """Provided a GSfont object and a font format string, return a list of LocationLabelDescriptors"""
 		labels = []
 		
 		instances = [instance for instance in font.instances if instance.active == True and instance.type == 0]
@@ -482,10 +483,12 @@ class ExportUFOAndDesignspace(object):
 		return labels
 		
 	def addLabels(self,doc,labels):
+		__doc__ = """Provided a DesignSpaceDocument and a list of LocationLabelDescriptors, adds those labels to the doc"""
 		doc.locationLabels = labels
 		return doc
 
-	def getLabelList(self,font,axis_index,format):
+	def getAxisLabelList(self,font,axis_index,format):
+		__doc__ = "Provided a GSfont object, the index of a GSAxis, and the output format, returns a list of labels"
 		axis_tag = font.axes[axis_index].axisTag
 		if font.customParameters["Axis Mappings"]:
 			axis_map = font.customParameters["Axis Mappings"][axis_tag]
@@ -511,7 +514,7 @@ class ExportUFOAndDesignspace(object):
 			user_max = axis_list[-1][1]
 			label = dict(name=style_name,userValue=axis_range[instance.axes[axis_index]], userMinimum=user_min, userMaximum=user_max,elidable=elidable)
 			if label not in labels:
-				labels.append(label)
+				labels.append(AxisLabelDescriptor(name=label["name"], userMinimum=label["userMinimum"], userMaximum=label["userMaximum"], userValue=label["userValue"],elidable=label["elidable"]))
 			
 		return labels
 
@@ -545,13 +548,10 @@ class ExportUFOAndDesignspace(object):
 				a.name = axis.name
 				a.tag = axis.axisTag
 
-
-				label_list= self.getLabelList(font,i,format)
-				
+				label_list = self.getAxisLabelList(font,i,format)
 				for label in label_list:
-					a.axisLabels.append(
-						AxisLabelDescriptor(name=label["name"], userMinimum=label["userMinimum"], userMaximum=label["userMaximum"], userValue=label["userValue"],elidable=label["elidable"])
-					)
+					a.axisLabels.append(label)
+				
 				doc.addAxis(a)
 	
 	def getConditionsFromOT(self, font):

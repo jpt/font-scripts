@@ -30,12 +30,12 @@ from fontParts.fontshell.guideline import RGuideline
 # - Add support for bracket layers (in addition to OT based subs)
 # - Finish STAT / designspaceLib 5 changes (verify implementation of AxisLabelDescriptor, implement LocationLabelDescriptor)
 # - Copy Glyph-level layers for non-master layers (but potentially a non-goal)
-# - Potnetially copy over all the metadata in com.blahblah for interop
+# - Potentially copy over all the metadata in lib/com.blahblah for interop
 # - Add support for production names
-# - Improve logging so user can see what's happening instead of a beach ball until the end
+# - Decompose smart stuff
+# - Glyphs hints to VTT Talk? 
 
 class ExportUFOAndDesignspace(object):
-	
 	def __init__(self):
 
 		margin_x = 20
@@ -44,6 +44,8 @@ class ExportUFOAndDesignspace(object):
 		ui_height = 24
 		window_width  = 220 + margin_x * 2
 		window_height = (ui_height * 10) + (spacer * 9) + (margin_y * 1.5)
+
+		#todo window_height = (ui_height * 15) + (spacer * 9) + (margin_y * 1.5)
 
 		self.w = vanilla.FloatingWindow(
 			( window_width, window_height ), # default window size
@@ -66,19 +68,37 @@ class ExportUFOAndDesignspace(object):
 
 		#
 
-		# Skateboard layers todo 
-		#
+		# #Skateboard layers todo 
+		
 		# self.w.buttonLabel2 = vanilla.TextBox((margin_x, yPos, -margin_x, ui_height), "Brace layers:", sizeStyle="small")
 
 		# yPos = yPos + spacer + ui_height / 2.33
 		
-		# self.w.buttonSelect2 = vanilla.SegmentedButton((margin_x, yPos, -margin_x, ui_height), [dict(title="Skateboard layers"), dict(title="Multiple UFOs")],sizeStyle='small', callback=self.buttonSelectCallback)
+		# self.w.buttonSelect2 = vanilla.SegmentedButton((margin_x, yPos, -margin_x, ui_height), [dict(title="Skateboard layers"), dict(title="Multiple UFOs")],sizeStyle='small', callback=self.layerButtonCallback)
 		# self.w.buttonSelect2.set(1)
 		
 		# yPos = yPos + spacer * 1 + ui_height
 
 		self.w.checkBox = vanilla.CheckBox((margin_x, yPos, -margin_x, ui_height), "Generate fontmake build scripts", callback=self.checkBoxCallback, value=True, sizeStyle="small")
+
+		# todo
+		# 
+		# yPos = yPos +  ui_height
+
+		# self.w.keepLibCheckbox = vanilla.CheckBox((margin_x, yPos, -margin_x, ui_height), "Keep Glyphs info in designspace lib", callback=self.checkBoxCallback, value=False, sizeStyle="small")
+
+		
+		# yPos = yPos +  ui_height
+
+		# self.w.decomposeCheckbox = vanilla.CheckBox((margin_x, yPos, -margin_x, ui_height), "Decompose smart stuff", callback=self.checkBoxCallback, value=False, sizeStyle="small")
+
+		# yPos = yPos +  ui_height
+
+		# self.w.productionCheckbox = vanilla.CheckBox((margin_x, yPos, -margin_x, ui_height), "Convert to production names", callback=self.checkBoxCallback, value=False, sizeStyle="small")
+
 		yPos = yPos + spacer * 1 + ui_height
+		
+		
 																										
 		self.w.decomposeLabel = vanilla.TextBox((margin_x, yPos, -margin_x, 14), "Decompose glyphs", sizeStyle="small")
 		yPos = yPos + spacer + ui_height / 2.33
@@ -103,10 +123,15 @@ class ExportUFOAndDesignspace(object):
 		}
 
 		self.to_add_build_script = True  # adds a minimal build script to the output dir
+		self.brace_layers_as_layers = False
 
 		# todo, keep track of these in a preference
 		self.to_decompose = []  # if you want, make an array of glyphnames (not unicodes)
 		self.to_remove_overlap = []  # same
+
+		self.keep_glyphs_lib = False
+		self.production_names = False
+		self.decompose_smart  = False
         
 		self.w.open()
 
@@ -123,11 +148,35 @@ class ExportUFOAndDesignspace(object):
 		elif sender.get() == 2:
 			self.to_build = { "variable": True, "static": True }
 
+	def layerButtonCallback(self, sender):
+		if sender.get() == 0:
+			self.brace_layers_as_layers = True
+		elif sender.get() == 1:
+			self.brace_layers_as_layers = False
+			
 	def checkBoxCallback(self, sender):
 		if sender.get() == 1:
 			self.to_add_build_script = True
 		else:
 			self.to_add_build_script = False
+
+	def keepLibCheckBoxCallback(self, sender):
+		if sender.get() == 1:
+			self.keep_glyphs_lib = True
+		else:
+			self.keep_glyphs_lib = False
+	
+	def decomposeCheckBoxCallback(self, sender):
+		if sender.get() == 1:
+			self.decompose_smart = True
+		else:
+			self.decompose_smart = False
+
+	def productionCheckBoxCallback(self, sender):
+		if sender.get() == 1:
+			self.production_names = True
+		else:
+			self.production_names = False
 
 	def addBuildScript(self, font, dest):
 		__doc__ = """Provided a font, destination and font name, creates a build script for the project"""
@@ -346,36 +395,65 @@ class ExportUFOAndDesignspace(object):
 		return special_layer_axes
 
 
-	def getNonSpecialGlyphs(self, font, axes):
-		__doc__ = """Provided a font and a list of axis coordinates, returns all glyphs without those coordinates"""
-		glyph_names_to_delete = []
+	# def getNonSpecialGlyphs(self, font, axes):
+	# 	__doc__ = """Provided a font and a list of axis coordinates, returns all glyphs without those coordinates"""
+	# 	glyph_names_to_delete = []
+	# 	for glyph in font.glyphs:
+	# 		delete_glyph = True
+	# 		for layer in glyph.layers:
+	# 			if layer.isSpecialLayer and layer.attributes['coordinates']:
+	# 				coords = list(
+	# 					map(int, layer.attributes['coordinates'].values()))
+	# 				if coords == axes:
+	# 					delete_glyph = False
+	# 		if delete_glyph:
+	# 			if glyph.name not in glyph_names_to_delete:
+	# 				glyph_names_to_delete.append(glyph.name)
+	# 	return glyph_names_to_delete
+
+	def getSpecialGlyphs(self, font, axes):
+		__doc__ = """Provided a font and a list of axis coordinates, returns all glyphs inside those coordinates"""
+		glyph_names = []
 		for glyph in font.glyphs:
-			delete_glyph = True
 			for layer in glyph.layers:
 				if layer.isSpecialLayer and layer.attributes['coordinates']:
 					coords = list(
 						map(int, layer.attributes['coordinates'].values()))
 					if coords == axes:
-						delete_glyph = False
-			if delete_glyph:
-				if glyph.name not in glyph_names_to_delete:
-					glyph_names_to_delete.append(glyph.name)
-		return glyph_names_to_delete
+						glyph_names.append(glyph.name)
+						continue
+		
+		return glyph_names
 
 
 	def getSpecialSources(self, font, format):
 		__doc__ = """Provided a font object, returns an array of designspaceLib SourceDescriptors """
-		sources = []
-		special_layer_axes = self.getSpecialLayerAxes(font)
-		for i, special_layer_axis in enumerate(special_layer_axes):
-			axes = list(special_layer_axis.values())
-			s = SourceDescriptor()
-			s.location = special_layer_axis
-			font_name = self.getNameWithAxis(font, axes, format)
-			s.filename = "masters/%s.ufo" % font_name
-			sources.append(s)
-		return sources
-
+		if self.brace_layers_as_layers == False:
+			sources = []
+			special_layer_axes = self.getSpecialLayerAxes(font)
+			for i, special_layer_axis in enumerate(special_layer_axes):
+				axes = list(special_layer_axis.values())
+				s = SourceDescriptor()
+				s.location = special_layer_axis
+				font_name = self.getNameWithAxis(font, axes, format)
+				s.filename = "masters/%s.ufo" % font_name
+				sources.append(s)
+			return sources
+		else:
+			sources = []
+			special_layer_axes = self.getSpecialLayerAxes(font)
+			for i, special_layer_axis in enumerate(special_layer_axes):
+				s = SourceDescriptor()
+				layer_axis_name= "{" + ", ".join(str(x) for x in list(special_layer_axis.values())) + "}"
+				axes = list(special_layer_axis.values())
+				s = SourceDescriptor()
+				s.location = special_layer_axis
+				font_name = self.getNameWithAxis(font, axes, format)
+				s.filename = "masters/%s.ufo" % font_name
+				s.familyName = font_name
+				s.layerName = layer_axis_name
+				sources.append(s)
+			return sources
 
 	def getAxisMap(self, font):
 		__doc__ = """Provided a font object, iterate over the GSInstances and return a dict compatible with the Axis Mappings custom parameter, based on the Axis Location custom parameter of those GSInstances"""
@@ -417,6 +495,7 @@ class ExportUFOAndDesignspace(object):
 					a.minimum = axis_map[axis_min]
 				except:
 					self.w.status.set("\n\nError: the font's axis mappings don't match its real min/max coords\n\n" + self.w.status.get())
+					print(" ")
 				origin_coord = self.getOriginCoords(font)[i]
 				user_origin = axis_map[origin_coord]
 				a.axisOrdering = i
@@ -426,33 +505,32 @@ class ExportUFOAndDesignspace(object):
 
 				# stat labels todo - make sure this is correct (or if instead of per all instances we just want e.g. the weight range for weights?)
 			
-				if(format == "variable"):
-					axis_list = list(axis_map.items())
-					stat_dict = dict()
-					for instance in font.instances:
-						elidable = False
-						if instance.customParameters["Style Name as STAT entry"]:
-							tag = instance.customParameters["Style Name as STAT entry"]
-							if tag == axis.axisTag:
-								if instance.variableStyleName:
-									name = instance.variableStyleName
-								else:
-									name = instance.name
-								if name not in stat_dict.keys():
-									if instance.customParameters["Elidable STAT Axis Value Name"]:
-										elidable_tag = instance.customParameters["Elidable STAT Axis Value Name"]
-										if elidable_tag == axis.axisTag:
-											elidable = True
-									
-									stat_dict[name] = dict(userValue=axis_map[instance.axes[i]],elidable=elidable)
-				
-					if len(stat_dict.items()):
-						for name,s in stat_dict.items():
-							user_min = axis_list[0][1]
-							user_max = axis_list[-1][1]
-							a.axisLabels.append(
-								AxisLabelDescriptor(name=name, userMinimum=user_min, userMaximum=user_max, userValue=s["userValue"],elidable=s["elidable"])
-							)
+				#if(format == "variable"):
+				axis_list = list(axis_map.items())
+				stat_dict = dict()
+				for instance in font.instances:
+					elidable = False
+					if instance.customParameters["Style Name as STAT entry"]:
+						tag = instance.customParameters["Style Name as STAT entry"]
+						if tag == axis.axisTag:
+							if instance.variableStyleName:
+								name = instance.variableStyleName
+							else:
+								name = instance.name
+							if name not in stat_dict.keys():
+								if instance.customParameters["Elidable STAT Axis Value Name"]:
+									elidable_tag = instance.customParameters["Elidable STAT Axis Value Name"]
+									if elidable_tag == axis.axisTag:
+										elidable = True
+								stat_dict[name] = dict(userValue=axis_map[instance.axes[i]],elidable=elidable)
+
+				if len(stat_dict.items()):
+					for name,s in stat_dict.items():
+						user_min = axis_list[0][1]
+						user_max = axis_list[-1][1]
+						a.axisLabels.append(
+							AxisLabelDescriptor(name=name, userMinimum=user_min, userMaximum=user_max, userValue=s["userValue"],elidable=s["elidable"])
+						)
 
 				doc.addAxis(a)
 
@@ -620,41 +698,45 @@ class ExportUFOAndDesignspace(object):
 	def generateMastersAtBraces(self, font, temp_project_folder, format):
 		__doc__ = """Provided a font object and export destination, exports all brace layers as individual UFO masters"""
 		special_layer_axes = self.getSpecialLayerAxes(font)
-		for i, special_layer_axis in enumerate(special_layer_axes):
-			axes = list(special_layer_axis.values())
-			font.instances.append(GSInstance())
-			ins = font.instances[-1]
-			ins.name = self.getNameWithAxis(font, axes, format)
-			ufo_file_name = "%s.ufo" % ins.name
-			style_name = self.getStyleNameWithAxis(font, axes)
-			ins.styleName = style_name
-			ins.axes = axes
-			brace_font = ins.interpolatedFont
-			brace_font.masters[0].name = style_name
-			glyph_names_to_delete = self.getNonSpecialGlyphs(font, axes)
-			for glyph in glyph_names_to_delete:
-				del(brace_font.glyphs[glyph])
-			feature_keys = [feature.name for feature in brace_font.features]
-			for key in feature_keys:
-				del(brace_font.features[key])
-			class_keys = [font_class.name for font_class in brace_font.classes]
-			for key in class_keys:
-				del(brace_font.classes[key])
-			for glyph in brace_font.glyphs:
-				if glyph.rightKerningGroup:
-					glyph.rightKerningGroup = None
-				if glyph.leftKerningGroup:
-					glyph.leftKerningGroup = None
-				if glyph.topKerningGroup:
-					glyph.topKerningGroup = None
-				if glyph.bottomKerningGroup:
-					glyph.bottomKerningGroup = None
-			brace_font.kerning = {}
-			brace_font.kerningRTL = {}
-			brace_font.kerningVertical = {}
-			ufo_file_path = os.path.join(temp_project_folder, ufo_file_name)
-			ufo = self.buildUfoFromMaster(brace_font.masters[0], brace_font.glyphs)
-			ufo.save(ufo_file_path)
+
+		if self.brace_layers_as_layers == False:
+			for i, special_layer_axis in enumerate(special_layer_axes):
+				axes = list(special_layer_axis.values())
+				font.instances.append(GSInstance())
+				ins = font.instances[-1]
+				ins.name = self.getNameWithAxis(font, axes, format)
+				ufo_file_name = "%s.ufo" % ins.name
+				style_name = self.getStyleNameWithAxis(font, axes)
+				ins.styleName = style_name
+				ins.axes = axes
+				brace_font = ins.interpolatedFont
+				brace_font.masters[0].name = style_name
+				#glyph_names_to_delete = self.getNonSpecialGlyphs(font, axes)
+				brace_glyphs = self.getSpecialGlyphs(font, axes)
+				for glyph in font.glyphs:
+					if glyph.name not in brace_glyphs:
+						del(brace_font.glyphs[glyph.name])
+				feature_keys = [feature.name for feature in brace_font.features]
+				for key in feature_keys:
+					del(brace_font.features[key])
+				class_keys = [font_class.name for font_class in brace_font.classes]
+				for key in class_keys:
+					del(brace_font.classes[key])
+				for glyph in brace_font.glyphs:
+					if glyph.rightKerningGroup:
+						glyph.rightKerningGroup = None
+					if glyph.leftKerningGroup:
+						glyph.leftKerningGroup = None
+					if glyph.topKerningGroup:
+						glyph.topKerningGroup = None
+					if glyph.bottomKerningGroup:
+						glyph.bottomKerningGroup = None
+				brace_font.kerning = {}
+				brace_font.kerningRTL = {}
+				brace_font.kerningVertical = {}
+				ufo_file_path = os.path.join(temp_project_folder, ufo_file_name)
+				ufo = self.buildUfoFromMaster(brace_font.masters[0], brace_font.glyphs)
+				ufo.save(ufo_file_path)
 
 
 	def getIndexByMaster(self, master):
@@ -700,6 +782,7 @@ class ExportUFOAndDesignspace(object):
 		master_index = self.getIndexByMaster(master)
 
 		self.w.status.set(("Building master: %s - %s" % (master.font.familyName, master.name)) + "\n" + self.w.status.get())
+		print(" ")
 
 		if not glyphs:
 			glyphs = font.glyphs
@@ -845,6 +928,12 @@ class ExportUFOAndDesignspace(object):
 		ufo.features.text = feature_str
 		return ufo
 
+	def addLayerMastersToUFO(self, font, ufo):
+		special_layers = self.getSpecialLayers(font)
+		for layer in special_layers:
+			print(layer)
+		print("ADDING IT UP")
+		return ufo
 
 	def exportUFOMasters(self, font, dest, format):
 		__doc__ = """Provided a font object and a destination, exports a UFO for each master in the UFO, not including special layers (for that use generateMastersAtBraces)"""
@@ -856,7 +945,11 @@ class ExportUFOAndDesignspace(object):
 			ufo = self.addGroups(font, ufo)
 			ufo = self.addKerning(font, ufo)
 			ufo = self.addFeatureInclude(ufo, font)
-			ufo.save(ufo_file_path)
+			if master.id == self.getOriginMaster(font) and self.brace_layers_as_layers == True:
+				ufo = self.addLayerMastersToUFO(font,ufo)
+				ufo.save(ufo_file_path)
+			else:
+				ufo.save(ufo_file_path)
 
 
 	def getFeatureDict(self, font):
@@ -890,27 +983,26 @@ class ExportUFOAndDesignspace(object):
 		except:
 			None
 
-		# todo: investigate and remove, seems like this is superceded by STAT
-		#
-		# add size feature for use in build script with ttx or something?
-		# size_arr = list(dict.fromkeys([instance.customParameters["Optical Size"] for instance in font.instances if instance.customParameters["Optical Size"]]))
-		# nl = "\n"
-		# for s,size in enumerate(size_arr):
-		# 	size_str = "feature size {\n"
-		# 	size_params = size.split(";")
-		# 	for i in range(0,len(size_params)-1):
-		# 		if i == 0:
-		# 			size_str = size_str + f"""    parameters {size_params[i]}"""
-		# 		else:
-		# 			size_str = size_str + " " + size_params[i]
-		# 	size_str = size_str + ";\n"
-		# 	size_str = size_str + f"""    sizemenuname "{size_params[-1]}";{nl}"""
-		# 	size_str = size_str + f"""    sizemenuname 1 "{size_params[-1]}";{nl}"""
-		# 	size_str = size_str + f"""    sizemenuname 1 21 0 "{size_params[-1]}";{nl}"""
-		# 	size_str = size_str + "} size;"
-		# 	key = "size_" + str(s)
-		# 	features[key] = size_str
-		
+		if self.to_build["static"] is not False:
+			#add size feature for use in build script with ttx or something?
+			size_arr = list(dict.fromkeys([instance.customParameters["Optical Size"] for instance in font.instances if instance.customParameters["Optical Size"]]))
+			nl = "\n"
+			for s,size in enumerate(size_arr):
+				size_str = "feature size {\n"
+				size_params = size.split(";")
+				for i in range(0,len(size_params)-1):
+					if i == 0:
+						size_str = size_str + f"""    parameters {size_params[i]}"""
+					else:
+						size_str = size_str + " " + size_params[i]
+				size_str = size_str + ";\n"
+				size_str = size_str + f"""    sizemenuname "{size_params[-1]}";{nl}"""
+				size_str = size_str + f"""    sizemenuname 1 "{size_params[-1]}";{nl}"""
+				size_str = size_str + f"""    sizemenuname 1 21 0 "{size_params[-1]}";{nl}"""
+				size_str = size_str + "} size;"
+				key = "size_" + str(s)
+				features[key] = size_str
+			
 		return features
 
 
@@ -982,12 +1074,14 @@ class ExportUFOAndDesignspace(object):
 			# generate a designspace file based on metadata in the copy of the open font
 			if self.to_build["static"] or (self.to_build["variable"] and not self.hasVariableFamilyName(font)):
 				self.w.status.set(("Building designspace from font metadata...") + "\n" + self.w.status.get())
+				print(" ")
 				static_designspace_doc = self.getDesignSpaceDocument(font, "static")
 				static_designspace_path = "%s/%s.designspace" % (
 					temp_project_folder, self.getFamilyName(font, "static"))
 				static_designspace_doc.write(static_designspace_path)
 			if self.to_build["variable"] and self.hasVariableFamilyName(font):
 				self.w.status.set(("Building variable designspace from font metadata...") + "\n" + self.w.status.get())
+				print(" ")
 				variable_designspace_doc = self.getDesignSpaceDocument(font, "variable")
 				variable_designspace_path = "%s/%s.designspace" % (
 					temp_project_folder, self.getFamilyName(font, "variable").replace(" ", ""))
@@ -996,12 +1090,16 @@ class ExportUFOAndDesignspace(object):
 			# We only need one set of masters
 			if self.to_build["variable"] and not self.to_build["static"]:
 				self.exportUFOMasters(font, temp_project_folder, "variable")
-				self.w.status.set(("Building UFOs for brace layers if present...") + "\n" + self.w.status.get())
-				self.generateMastersAtBraces(font, temp_project_folder, "variable")
+				if self.brace_layers_as_layers == False:
+					self.w.status.set(("Building UFOs for brace layers if present...") + "\n" + self.w.status.get())
+					print(" ")
+					self.generateMastersAtBraces(font, temp_project_folder, "variable")
 			else:
 				self.exportUFOMasters(font, temp_project_folder, "static")
-				self.w.status.set(("Building UFOs for brace layers if present...") + "\n" + self.w.status.get())
-				self.generateMastersAtBraces(font, temp_project_folder, "static")
+				if self.brace_layers_as_layers == False:
+					self.w.status.set(("Building UFOs for brace layers if present...") + "\n" + self.w.status.get())
+					print(" ")
+					self.generateMastersAtBraces(font, temp_project_folder, "static")
 
 			for file in glob.glob(os.path.join(temp_project_folder, "*.ufo")):
 				shutil.move(file, master_dir)
@@ -1017,5 +1115,6 @@ class ExportUFOAndDesignspace(object):
 		# open the output dir
 		os.system("open %s" % dest.replace(" ", "\ "))
 		self.w.status.set(("Done!") + "\n" + self.w.status.get())
+		print(" ")
 
 ExportUFOAndDesignspace()

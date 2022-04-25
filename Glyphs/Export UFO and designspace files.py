@@ -933,13 +933,12 @@ class ExportUFOAndDesignspace(object):
 		__doc__ = """Provided a fontParts UFO master, add feature includes for classes and individual features."""
 		features = self.getFeatureDict(font)
 		feature_str = """include(../features/prefixes.fea);
-	include(../features/classes.fea);
+include(../features/classes.fea);
 	"""
 		nl = "\n"
 		for feature in features.keys():
 			if not feature.startswith("size_"):
-				feature_str = feature_str + \
-					f"""include(../features/{feature}.fea);{nl}"""
+				feature_str = feature_str + f"""include(../features/{feature}.fea);{nl}"""
 			ufo.features.text = feature_str
 		return ufo
 

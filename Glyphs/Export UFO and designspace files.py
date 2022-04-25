@@ -17,7 +17,7 @@ from fontTools.designspaceLib import AxisDescriptor
 from fontTools.designspaceLib import SourceDescriptor
 from fontTools.designspaceLib import InstanceDescriptor
 from fontTools.designspaceLib import RuleDescriptor
-# from fontTools.designspaceLib import AxisLabelDescriptor - todo, implemented below but need to test
+from fontTools.designspaceLib import AxisLabelDescriptor # todo, make sure it's actually implemented right lol
 #from fontTools.designspaceLib import LocationLabelDescriptor todo
 from fontParts.world import NewFont
 from fontParts.fontshell.contour import RContour
@@ -25,9 +25,18 @@ from fontParts.fontshell.component import RComponent
 from fontParts.fontshell.anchor import RAnchor
 from fontParts.fontshell.guideline import RGuideline
 
-class ExportUFOAndDesignspace( object ):
+# Todo:
+# - Add support for font-level layers (instead of multiple UFOs for brace layers)
+# - Add support for bracket layers (in addition to OT based subs)
+# - Finish STAT / designspaceLib 5 changes (verify implementation of AxisLabelDescriptor, implement LocationLabelDescriptor)
+# - Copy Glyph-level layers for non-master layers (but potentially a non-goal)
+# - Potnetially copy over all the metadata in com.blahblah for interop
+# - Add support for production names
+# - Improve logging so user can see what's happening instead of a beach ball until the end
+
+class ExportUFOAndDesignspace(object):
 	
-	def __init__( self ):
+	def __init__(self):
 
 		margin_x = 20
 		margin_y = 16
@@ -104,7 +113,6 @@ class ExportUFOAndDesignspace( object ):
 	def exportButton(self, sender):
 		self.to_decompose = self.w.decomposeField.get().split(" ")
 		self.to_remove_overlap = self.w.overlapField.get().split(" ")
-		self.w.status.set(("Exporting %s" % Glyphs.font.familyName) + "\n" + self.w.status.get())
 		self.main()
 	
 	def buttonSelectBuildCallback(self, sender):
@@ -130,7 +138,7 @@ class ExportUFOAndDesignspace( object ):
 		vf_font_name = self.getFamilyName(font, "variable").replace(" ", "")
 		nl = "\n"
 		vf_script = f"""python3 -m fontmake -m {vf_font_name}.designspace -o variable --output-dir build/vf"""
-		static_script = f"""python3 -m fontmake -i -m {static_font_name}.designspace -o ttf --output-dir build/ttf{nl}python3 -m fontmake -i -m {static_font_name}.designspace -o otf --output-dir build/otf"""
+		static_script = f"""python3 -m fontmake -i --expand-features-to-instances -m {static_font_name}.designspace -o ttf --output-dir build/ttf{nl}python3 -m fontmake -i --expand-features-to-instances -m {static_font_name}.designspace -o otf --output-dir build/otf"""
 		if self.to_build["static"] and self.to_build["variable"]:
 			build_script = "#!/bin/bash" + "\n" + vf_script + "\n" + static_script + "\n"
 		elif self.to_build["static"]:
@@ -285,6 +293,7 @@ class ExportUFOAndDesignspace( object ):
 	def getSources(self, font, format):
 		__doc__ = """Provided a font object, creates and returns a list of designspaceLib SourceDescriptors"""
 		sources = []
+
 		for i, master in enumerate(font.masters):
 			s = SourceDescriptor()
 			if self.hasVariableFamilyName(font) and not self.to_build["static"]:
@@ -297,13 +306,14 @@ class ExportUFOAndDesignspace( object ):
 			locations = dict()
 			for x, axis in enumerate(master.axes):
 				locations[font.axes[x].name] = axis
-			s.location = locations
-			origin_master_id = self.getOriginMaster(font)
-			if master.id == origin_master_id:
-				s.copyLib = True
-				s.copyFeatures = True
-				s.copyGroups = True
-				s.copyInfo = True
+			s.designLocation = locations
+			# deprecated in dsLib 5
+			# origin_master_id = self.getOriginMaster(font)
+			# if master.id == origin_master_id:
+			# 	s.copyLib = True
+			# 	s.copyFeatures = True
+			# 	s.copyGroups = True
+			# 	s.copyInfo = True
 			s.mutedGlyphNames = self.getMutedGlyphs(font)
 			sources.append(s)
 		return sources
@@ -416,33 +426,33 @@ class ExportUFOAndDesignspace( object ):
 
 				# stat labels todo - make sure this is correct (or if instead of per all instances we just want e.g. the weight range for weights?)
 			
-				# if(format == "variable"):
-				# 	axis_list = list(axis_map.items())
-				# 	stat_dict = dict()
-				# 	for instance in font.instances:
-				# 		elidable = False
-				# 		if instance.customParameters["Style Name as STAT entry"]:
-				# 			tag = instance.customParameters["Style Name as STAT entry"]
-				# 			if tag == axis.axisTag:
-				# 				if instance.variableStyleName:
-				# 					name = instance.variableStyleName
-				# 				else:
-				# 					name = instance.name
-				# 				if name not in stat_dict.keys():
-				# 					if instance.customParameters["Elidable STAT Axis Value Name"]:
-				# 						elidable_tag = instance.customParameters["Elidable STAT Axis Value Name"]
-				# 						if elidable_tag == axis.axisTag:
-				# 							elidable = True
+				if(format == "variable"):
+					axis_list = list(axis_map.items())
+					stat_dict = dict()
+					for instance in font.instances:
+						elidable = False
+						if instance.customParameters["Style Name as STAT entry"]:
+							tag = instance.customParameters["Style Name as STAT entry"]
+							if tag == axis.axisTag:
+								if instance.variableStyleName:
+									name = instance.variableStyleName
+								else:
+									name = instance.name
+								if name not in stat_dict.keys():
+									if instance.customParameters["Elidable STAT Axis Value Name"]:
+										elidable_tag = instance.customParameters["Elidable STAT Axis Value Name"]
+										if elidable_tag == axis.axisTag:
+											elidable = True
 									
-				# 					stat_dict[name] = dict(userValue=axis_map[instance.axes[i]],elidable=elidable)
+									stat_dict[name] = dict(userValue=axis_map[instance.axes[i]],elidable=elidable)
 				
-				# 	if len(stat_dict.items()):
-				# 		for name,s in stat_dict.items():
-				# 			user_min = axis_list[0][1]
-				# 			user_max = axis_list[-1][1]
-				# 			a.axisLabels.append(
-				# 				AxisLabelDescriptor(name=name, userMinimum=user_min, userMaximum=user_max, userValue=s["userValue"],elidable=s["elidable"])
-				# 			)
+					if len(stat_dict.items()):
+						for name,s in stat_dict.items():
+							user_min = axis_list[0][1]
+							user_max = axis_list[-1][1]
+							a.axisLabels.append(
+								AxisLabelDescriptor(name=name, userMinimum=user_min, userMaximum=user_max, userValue=s["userValue"],elidable=s["elidable"])
+							)
 
 				doc.addAxis(a)
 
@@ -827,10 +837,11 @@ class ExportUFOAndDesignspace( object ):
 	"""
 		nl = "\n"
 		for feature in features.keys():
+			#if not feature.startswith("size_"):
+			# todo - investigate and remove - optical sizes may be replaced by STAT now
 			# sizes we'll have to add to individual fonts
-			if not feature.startswith("size_"):
-				feature_str = feature_str + \
-					f"""include(../features/{feature}.fea);{nl}"""
+			feature_str = feature_str + \
+				f"""include(../features/{feature}.fea);{nl}"""
 		ufo.features.text = feature_str
 		return ufo
 
@@ -879,24 +890,26 @@ class ExportUFOAndDesignspace( object ):
 		except:
 			None
 
+		# todo: investigate and remove, seems like this is superceded by STAT
+		#
 		# add size feature for use in build script with ttx or something?
-		size_arr = list(dict.fromkeys([instance.customParameters["Optical Size"] for instance in font.instances if instance.customParameters["Optical Size"]]))
-		nl = "\n"
-		for size in size_arr:
-			size_str = "feature size {\n"
-			size_params = size.split(";")
-			for i in range(0,len(size_params)-1):
-				if i == 0:
-					size_str = size_str + f"""    parameters {size_params[i]}"""
-				else:
-					size_str = size_str + " " + size_params[i]
-			size_str = size_str + ";\n"
-			size_str = size_str + f"""    sizemenuname "{size_params[-1]}";{nl}"""
-			size_str = size_str + f"""    sizemenuname 1 "{size_params[-1]}";{nl}"""
-			size_str = size_str + f"""    sizemenuname 1 21 0 "{size_params[-1]}";{nl}"""
-			size_str = size_str + "} size;"
-			key = "size_" + size_params[-1]
-			features[key] = size_str
+		# size_arr = list(dict.fromkeys([instance.customParameters["Optical Size"] for instance in font.instances if instance.customParameters["Optical Size"]]))
+		# nl = "\n"
+		# for s,size in enumerate(size_arr):
+		# 	size_str = "feature size {\n"
+		# 	size_params = size.split(";")
+		# 	for i in range(0,len(size_params)-1):
+		# 		if i == 0:
+		# 			size_str = size_str + f"""    parameters {size_params[i]}"""
+		# 		else:
+		# 			size_str = size_str + " " + size_params[i]
+		# 	size_str = size_str + ";\n"
+		# 	size_str = size_str + f"""    sizemenuname "{size_params[-1]}";{nl}"""
+		# 	size_str = size_str + f"""    sizemenuname 1 "{size_params[-1]}";{nl}"""
+		# 	size_str = size_str + f"""    sizemenuname 1 21 0 "{size_params[-1]}";{nl}"""
+		# 	size_str = size_str + "} size;"
+		# 	key = "size_" + str(s)
+		# 	features[key] = size_str
 		
 		return features
 

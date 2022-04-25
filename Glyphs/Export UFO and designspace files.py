@@ -937,9 +937,10 @@ class ExportUFOAndDesignspace(object):
 	"""
 		nl = "\n"
 		for feature in features.keys():
-			feature_str = feature_str + \
-				f"""include(../features/{feature}.fea);{nl}"""
-		ufo.features.text = feature_str
+			if not feature.startswith("size_"):
+				feature_str = feature_str + \
+					f"""include(../features/{feature}.fea);{nl}"""
+			ufo.features.text = feature_str
 		return ufo
 
 	# todo

@@ -327,6 +327,7 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 
 
 	def getStyleNameWithAxis(self, font, axes):
+		__doc__ = """Returns a style name based on GSAxes"""
 		style_name = ""
 		for i, axis in enumerate(axes):
 			style_name = "%s %s %s" % (style_name, font.axes[i].name, axis)
@@ -814,6 +815,7 @@ condition_list, replacement_list = getConditionsFromOT(font)
 
 
 	def addFontInfoToUfo(self,master,ufo):
+		__doc__ = """Provided a GSFontMaster and a UFO, returns a UFO with OpenType metadata from that master (and its parent GSFont)"""
 		font = master.font
 		ufo.info.versionMajor = font.versionMajor
 		ufo.info.versionMinor = font.versionMinor
@@ -862,7 +864,7 @@ condition_list, replacement_list = getConditionsFromOT(font)
 		#ufo.info.openTypeNamePreferredSubfamilyName = 
 		#ufo.info.openTypeNameCompatibleFullName = 
 		#ufo.info.openTypeNameSampleText = 
-		# These are for instances only, no?
+		# These are for instances only, no? Ghmmmmmmm
 		#ufo.info.openTypeNameWWSFamilyName =
 		#ufo.info.openTypeNameWWSSubfamilyName =
 
@@ -1085,6 +1087,7 @@ include(../features/classes.fea);
 	# 	return ufo
 
 	def addSkipExport(self,font,ufo):
+		__doc__ =  """Provided a GSfont and a UFO, adds an item to lib.plist for skipping glyphs that are non-exporting and returns that UFO"""
 		lib = RLib()
 		lib["public.skipExportGlyphs"] = [g.name for g in font.glyphs if g.export == False]
 		ufo.lib.update(lib)
@@ -1202,6 +1205,7 @@ include(../features/classes.fea);
 		f.close()
 
 	def addPostscriptNames(self,font,ufo):
+		__doc__ = """Provided a GSfont and a UFO, adds a lib.plist item for PostScript names that should be swapped out for production names on build"""
 		lib = RLib()
 		lib["public.postscriptNames"] = dict()
 		glyphs = [g for g in font.glyphs if g.export == True]

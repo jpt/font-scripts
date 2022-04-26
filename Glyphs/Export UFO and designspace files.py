@@ -31,15 +31,12 @@ from fontParts.fontshell.lib import RLib
 # - Metainfo.plist: creator, formatVersion, formatVersionMinor
 # - One designspace for VF? Have to look into designspace 5 spec more closely
 # - Finish the metadata in addFontInfoToUfo
-# - Copy lib.plist keys
 # - Add support for font-level layers (instead of multiple UFOs for brace layers)
 # - Add support for bracket layers (in addition to OT based subs, which are already supported)
 # - Copy Glyph-level layers over (but this is potentially a non-goal)
 # - Images in glyphs
 # - Decompose smart stuff
 # - More elaborate build script possibilities (add size table that we're outputting but not importing in masters, for example; other tables too)
-# - public.glyphOrder
-# - public.skipExportGlyphs
 # - public.openTypeMeta
 # - public.openTypeCategories
 # - public.unicodeVariationSequences
@@ -1087,7 +1084,10 @@ include(../features/classes.fea);
 	# 	return ufo
 
 	def addSkipExport(self,font,ufo):
-		skip_export = [g for g in font.glyphs if g.export == False]
+		lib = RLib()
+		lib["public.skipExportGlyphs"] = [g.name for g in font.glyphs if g.export == False]
+		ufo.lib.update(lib)
+		return ufo
 
 
 	def exportUFOMasters(self, font, dest, format):

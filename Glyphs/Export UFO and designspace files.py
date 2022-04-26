@@ -26,17 +26,21 @@ from fontParts.fontshell.anchor import RAnchor
 from fontParts.fontshell.guideline import RGuideline
 
 # Todo:
+# - Add RoboFont production name substitutions (not convert)?
 # - One designspace for VF? Have to look into designspace 5 spec more closely
+# - Finish the metadata in addFontInfoToUfo
+# - Copy lib.plist keys
 # - Add support for font-level layers (instead of multiple UFOs for brace layers)
 # - Add support for bracket layers (in addition to OT based subs, which are already supported)
 # - Copy Glyph-level layers over (but this is potentially a non-goal)
+# - Images in glyphs
 # - Mayyyyyvbe add support for production names (this might be really hard because of features, and fontmake does it, so who cares?)
 # - Decompose smart stuff
-# - Glyphs hints to VTT Talk? Maybe too insane
+# - Glyphs hints to VTT Talk? Maybe too insane. Can we get hints by generating masters instances and then creating CVT table or something? there is a CVT custom param.
+# - More elaborate build script possibilities (add size table that we're outputting but not importing in masters, for example; other tables too)
 
 class ExportUFOAndDesignspace(object):
 	def __init__(self):
-
 		margin_x = 20
 		margin_y = 16
 		spacer = 6
@@ -96,8 +100,6 @@ class ExportUFOAndDesignspace(object):
 		# self.w.productionCheckbox = vanilla.CheckBox((margin_x, yPos, -margin_x, ui_height), "Convert to production names", callback=self.checkBoxCallback, value=False, sizeStyle="small")
 
 		yPos = yPos + spacer * 1 + ui_height
-		
-		
 																										
 		self.w.decomposeLabel = vanilla.TextBox((margin_x, yPos, -margin_x, 14), "Decompose glyphs", sizeStyle="small")
 		yPos = yPos + spacer + ui_height / 2.33
@@ -179,7 +181,6 @@ class ExportUFOAndDesignspace(object):
 
 	def addBuildScript(self, font, dest):
 		__doc__ = """Provided a font, destination and font name, creates a build script for the project"""
-
 		if not self.to_add_build_script:
 			return
 		static_font_name = self.getFamilyName(font, "static").replace(" ", "")
@@ -227,8 +228,8 @@ class ExportUFOAndDesignspace(object):
 	def getBoundsByTag(self, font, tag):
 		__doc__ = """Provided a font object and an axis tag, returns an array in the form of [minimum, maximum] representing the bounds of an axis.
 
-	Example use:
-	min, max = getBoundsByTag(Glyphs.font,"wght")"""
+Example use:
+min, max = getBoundsByTag(Glyphs.font,"wght")"""
 		min = None
 		max = None
 		for i, axis in enumerate(font.axes):
@@ -341,7 +342,6 @@ class ExportUFOAndDesignspace(object):
 	def getSources(self, font, format):
 		__doc__ = """Provided a font object, creates and returns a list of designspaceLib SourceDescriptors"""
 		sources = []
-
 		for i, master in enumerate(font.masters):
 			s = SourceDescriptor()
 			if self.hasVariableFamilyName(font) and not self.to_build["static"]:
@@ -359,16 +359,15 @@ class ExportUFOAndDesignspace(object):
 			sources.append(s)
 		return sources
 
+
 	def addSources(self, doc, sources):
 		__doc__ = """Provided a designspace document and array of source descriptors, adds those sources to the designspace doc."""
 		for source in sources:
 			doc.addSource(source)
 
 
-
 	def getSpecialLayers(self, font):
 		__doc__ = """Provided a font object, returns a list of GSLayers that are brace layers (have intermediate master coordinates)."""
-
 		return [l for g in font.glyphs for l in g.layers if l.isSpecialLayer and l.attributes['coordinates']]
 
 
@@ -429,6 +428,7 @@ class ExportUFOAndDesignspace(object):
 				sources.append(s)
 			return sources
 
+
 	def getAxisMap(self, font):
 		__doc__ = """Provided a font object, iterate over the GSInstances and return a dict compatible with the Axis Mappings custom parameter, based on the Axis Location custom parameter of those GSInstances"""
 		axis_map = dict()
@@ -480,13 +480,15 @@ class ExportUFOAndDesignspace(object):
 			label = LocationLabelDescriptor(name=style_name,userLocation=user_location,elidable=elidable)
 			if label not in labels:
 				labels.append(label)
-			
+		labels = list(dict.fromkeys(labels))
 		return labels
-		
+
+
 	def addLabels(self,doc,labels):
 		__doc__ = """Provided a DesignSpaceDocument and a list of LocationLabelDescriptors, adds those labels to the doc"""
 		doc.locationLabels = labels
 		return doc
+
 
 	def getAxisLabelList(self,font,axis_index,format):
 		__doc__ = "Provided a GSfont object, the index of a GSAxis, and the output format, returns a list of labels"
@@ -500,23 +502,34 @@ class ExportUFOAndDesignspace(object):
 		axis_list = list(axis_range.items())
 
 		labels = []
+		label_user = []
 		
 		instances = [instance for instance in font.instances if instance.active == True and instance.type == 0]
 		for instance in instances:
-			if format == "variable" and instance.variableStyleName:
-				style_name = instance.variableStyleName
+			#
+			# tricky if there's an opsz... 
+			#
+			# if format == "variable" and instance.variableStyleName:
+			#	style_name = instance.variableStyleName
+			# else:
+			#	style_name = instance.name
+
+			if axis_tag == "opsz" and instance.customParameters["Optical Size"]:
+				style_name = instance.customParameters["Optical Size"].split(";")[-1]
 			else:
 				style_name = instance.name
+				
 			if instance.customParameters["Elidable STAT Axis Value Name"] and instance.customParameters["Elidable STAT Axis Value Name"] == axis_tag:
 				elidable = True
 			else:
 				elidable = False
 			user_min = axis_list[0][1]
 			user_max = axis_list[-1][1]
-			label = dict(name=style_name,userValue=axis_range[instance.axes[axis_index]], userMinimum=user_min, userMaximum=user_max,elidable=elidable)
-			if label not in labels:
-				labels.append(AxisLabelDescriptor(name=label["name"], userMinimum=label["userMinimum"], userMaximum=label["userMaximum"], userValue=label["userValue"],elidable=label["elidable"]))
-			
+			user_val = axis_range[instance.axes[axis_index]]
+			label = AxisLabelDescriptor(name=style_name,userValue=user_val, userMinimum=user_min, userMaximum=user_max,elidable=elidable)
+			if user_val not in label_user:
+				label_user.append(user_val)
+				labels.append(label)
 		return labels
 
 		
@@ -554,13 +567,14 @@ class ExportUFOAndDesignspace(object):
 					a.axisLabels.append(label)
 				
 				doc.addAxis(a)
-	
+
+
 	def getConditionsFromOT(self, font):
 		__doc__ = """Provided a font object, returns two arrays: one a list of OT substitution conditions, and one of the glyph replacements to make given those conditions. Each array has the same index.
 	
-	Example use:
-	condition_list, replacement_list = getConditionsFromOT(font)
-	"""
+Example use:
+condition_list, replacement_list = getConditionsFromOT(font)
+"""
 		feature_code = ""
 		for feature_itr in font.features:
 			for line in feature_itr.code.splitlines():
@@ -786,6 +800,160 @@ class ExportUFOAndDesignspace(object):
 		return ufo
 
 
+	def addFontInfoToUfo(self,master,ufo):
+		font = master.font
+		ufo.info.versionMajor = font.versionMajor
+		ufo.info.versionMinor = font.versionMinor
+
+		# Generic legal 
+		ufo.info.copyright = font.copyright
+		ufo.info.trademark = font.trademark
+
+		# Generic dimension
+		ufo.info.unitsPerEm = font.upm
+		ufo.info.ascender = master.ascender
+		ufo.info.descender = master.descender
+		ufo.info.xHeight = master.xHeight
+		ufo.info.capHeight = master.capHeight
+		ufo.info.ascender = master.ascender
+		ufo.info.italicAngle = master.italicAngle
+
+		# Misc
+		ufo.info.note = font.note
+
+		# Gasp todo ? not sure
+		#ufo.info.openTypeGaspRangeRecords = []
+		#ufo.info.rangeMaxPPEM = dict()
+		#ufo.info.rangeGaspBehavior = []
+
+		# Head table
+		ufo.info.openTypeHeadCreated = font.date.strftime("%Y/%m/%d %H:%M:%S")
+		# todo ?
+		#ufo.info.openTypeHeadLowestRecPPEM = ?
+		# ufo.info.openTypeHeadFlags = ?
+		# ufo.info.created reated can be calculated by subtracting the 12:00 midnight, January 1, 1904 (as specified in the head table documentation) from the date stored at openTypeHeadCreated.
+
+		# name table - some of these may be instance specific?
+		ufo.info.openTypeNameDesigner = font.designer
+		ufo.info.openTypeNameDesignerURL = font.designerURL
+		ufo.info.openTypeNameManufacturer = font.manufacturer
+		ufo.info.openTypeNameManufacturerURL = font.manufacturerURL
+		ufo.info.openTypeNameLicense = font.license
+		for info in font.properties:
+			if info.key == "licenseURL":
+				ufo.info.openTypeNameLicenseURL = info.value
+		#ufo.info.openTypeNameVersion = 
+		#ufo.info.openTypeNameUniqueID = 
+		#ufo.info.openTypeNameDescription = 
+		#ufo.info.openTypeNamePreferredFamilyName = 
+		#ufo.info.openTypeNamePreferredSubfamilyName = 
+		#ufo.info.openTypeNameCompatibleFullName = 
+		#ufo.info.openTypeNameSampleText = 
+		# These are for instances only, no?
+		#ufo.info.openTypeNameWWSFamilyName =
+		#ufo.info.openTypeNameWWSSubfamilyName =
+
+		# hhea table
+
+		ufo.info.openTypeHheaAscender = int(
+			master.customParameters["hheaAscender"])
+		ufo.info.openTypeHheaDescender = int(
+			master.customParameters["hheaDescender"])
+		ufo.info.openTypeHheaLineGap = int(master.customParameters["hheaLineGap"])
+		# todo
+		# ufo.info.openTypeHheaCaretSlopeRise
+		# ufo.info.openTypeHheaCaretSlopeRun
+		# ufo.info.openTypeHheaCaretOffset
+		
+		# OS/2 table
+		#ufo.info.openTypeOS2WidthClass = 
+		#ufo.info.openTypeOS2WeightClass = 
+		#ufo.info.openTypeOS2Selection = 
+
+		for info in font.properties:
+			if info.key == "vendorID":
+				ufo.info.openTypeOS2VendorID = info.value
+
+		#ufo.info.openTypeOS2Panose = 
+		#ufo.info.openTypeOS2FamilyClass = 
+		#ufo.info.openTypeOS2UnicodeRanges =
+		#ufo.info.openTypeOS2CodePageRanges = 
+
+		ufo.info.openTypeOS2TypoAscender = int(
+			master.customParameters["typoAscender"])
+		ufo.info.openTypeOS2TypoDescender = int(
+			master.customParameters["typoDescender"])
+		
+		ufo.info.openTypeOS2TypoLineGap = int(master.customParameters["typoLineGap"])
+		ufo.info.openTypeOS2WinAscent = int(master.customParameters["winAscent"])
+		ufo.info.openTypeOS2WinDescent = int(master.customParameters["winDescent"])
+
+		#ufo.info.openTypeOS2Type = 
+		#ufo.info.openTypeOS2SubscriptXSize = 
+		#ufo.info.openTypeOS2SubscriptYSize = 
+		#ufo.info.openTypeOS2SubscriptXOffset = 
+		#ufo.info.openTypeOS2SubscriptYOffset = 
+		#ufo.info.openTypeOS2SuperscriptXSize = 
+		#ufo.info.openTypeOS2SuperscriptYSize = 
+		#ufo.info.openTypeOS2SuperscriptXOffset = 
+		#ufo.info.openTypeOS2SuperscriptYOffset = 
+		#ufo.info.openTypeOS2StrikeoutSize = 
+		#ufo.info.openTypeOS2StrikeoutPosition = 
+
+		# vhea table
+
+		#ufo.info.openTypeVheaVertTypoAscender = 
+		#ufo.info.openTypeVheaVertTypoDescender = 
+		#ufo.info.openTypeVheaVertTypoLineGap = 
+		#ufo.info.openTypeVheaCaretSlopeRise = 
+		#ufo.info.openTypeVheaCaretSlopeRun = 
+		#ufo.info.openTypeVheaCaretOffset = 
+
+		# postScript 
+		#ufo.info.postscriptFontName = 
+		#ufo.info.postscriptFullName = 
+		#ufo.info.postscriptSlantAngle = 
+		#ufo.info.postscriptUniqueID = 
+		#ufo.info.postscriptUnderlineThickness = 
+		#ufo.info.postscriptUnderlinePosition = 
+		#ufo.info.postscriptIsFixedPitch = 
+
+		#ufo.info.postscriptBlueValues = 
+		#ufo.info.postscriptOtherBlues = 
+		#ufo.info.postscriptFamilyBlues = 
+		#ufo.info.postscriptFamilyOtherBlues = 
+		#ufo.info.postscriptStemSnapH = 
+		#ufo.info.postscriptStemSnapV = 
+
+		#ufo.info.postscriptBlueFuzz = 
+		#ufo.info.postscriptBlueShift = 
+		#ufo.info.postscriptBlueScale = 
+		#ufo.info.postscriptForceBold = 
+		#ufo.info.postscriptDefaultWidthX = 
+		#ufo.info.postscriptNominalWidthX = 
+		#ufo.info.postscriptWeightName = 
+		#ufo.info.postscriptDefaultCharacter = 
+		#ufo.info.postscriptWindowsCharacterSet
+
+		# FOND
+		#ufo.info.macintoshFONDFamilyID = 
+		#ufo.info.macintoshFONDName = 
+
+		# More todo (look into, else copy as params to lib.plist):
+		#
+		# fsType
+		# Use Typo metrics
+		# Use line breaks
+		# WWS names - how to do since this is per-master vs instance? 
+		# Extension kerning
+		# Hints from master
+		#
+		#
+		# TTFZones / TTFBlueFuzz ??
+
+
+		return ufo
+
 	def buildUfoFromMaster(self, master, glyphs):
 		__doc__ = """Provided a GSMFontMaster and a list of glyph names to be used in that master, return a fontParts UFO"""
 		font = master.font
@@ -797,71 +965,12 @@ class ExportUFOAndDesignspace(object):
 		if not glyphs:
 			glyphs = font.glyphs
 
+		# Create UFO
 		ufo = NewFont(familyName=font.familyName, styleName=master.name)
 
-		# set metadata
-		ufo.info.openTypeHeadCreated = font.date.strftime("%Y/%m/%d %H:%M:%S")
-		ufo.info.openTypeNameDesigner = font.designer
-		ufo.info.openTypeNameDesignerURL = font.designerURL
-		ufo.info.versionMajor = font.versionMajor
-		ufo.info.versionMinor = font.versionMinor
-		ufo.info.year = font.date.year
-		ufo.info.copyright = font.copyright
-		ufo.info.trademark = font.trademark
-		ufo.info.openTypeNameManufacturer = font.manufacturer
-		ufo.info.openTypeNameManufacturerURL = font.manufacturerURL
-		ufo.info.openTypeNameLicense = font.license
-		for info in font.properties:
-			if info.key == "licenseURL":
-				ufo.info.licenseURL = info.value
-			if info.key == "vendorID":
-				ufo.info.openTypeOS2VendorID = info.value
-		ufo.info.note = font.note #idk, maybe not?
-
-		# todo
-		#
-		# hints
-		#
-		#ufo.info.postscriptStemSnapH = 
-		#ufo.info.postscriptStemSnapV = 
-		#ufo.info.postscriptBlueValues = 
-		#ufo.info.postscriptOtherBlues = 
-		#ufo.info.postscriptFamilyBlues = 
-		#ufo.info.postscriptFamilyOtherBlues = 
-		#ufo.info.postscriptBlueFuzz = 
-		#ufo.info.postscriptBlueShift = 
-		#ufo.info.postscriptBlueScale = 
-		#ufo.info.postscriptForceBold = 
-
-		# metrics
-		ufo.info.unitsPerEm = font.upm
-		ufo.info.ascender = master.ascender
-		ufo.info.descender = master.descender
-		ufo.info.xHeight = master.xHeight
-		ufo.info.capHeight = master.capHeight
-		ufo.info.ascender = master.ascender
-		ufo.info.italicAngle = master.italicAngle
-		# todo
-		#ufo.info.widthValue = 
-		#ufo.info.weightValue = 
-
-		# metrics in custom params
-		ufo.info.openTypeOS2WinAscent = int(master.customParameters["winAscent"])
-		ufo.info.openTypeOS2WinDescent = int(master.customParameters["winDescent"])
-		ufo.info.openTypeOS2TypoAscender = int(
-			master.customParameters["typoAscender"])
-		ufo.info.openTypeOS2TypoDescender = int(
-			master.customParameters["typoAscender"])
-		ufo.info.openTypeHheaAscender = int(
-			master.customParameters["hheaAscender"])
-		ufo.info.openTypeHheaDescender = int(
-			master.customParameters["hheaDescender"])
-		ufo.info.openTypeHheaLineGap = int(master.customParameters["hheaLineGap"])
-		ufo.info.openTypeOS2TypoLineGap = int(
-			master.customParameters["typoLineGap"])
-
-		# todo WWS - might be tricky coming from instances to masters... 
-
+		# Add fontinfo.plist
+		ufo = self.addFontInfoToUfo(master,ufo)
+		
 		# add empty glyphs
 		for glyph in glyphs:
 			ufo.newGlyph(glyph.name)
@@ -945,7 +1054,7 @@ class ExportUFOAndDesignspace(object):
 		features = self.getFeatureDict(font)
 		feature_str = """include(../features/prefixes.fea);
 include(../features/classes.fea);
-	"""
+"""
 		nl = "\n"
 		for feature in features.keys():
 			if not feature.startswith("size_"):

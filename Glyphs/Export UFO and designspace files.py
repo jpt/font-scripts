@@ -258,7 +258,6 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 		return [min, max]
 
 
-
 	def getOriginMaster(self, font):
 		__doc__ = """Provided a font object, returns a string of the master ID referencing the master that is set to the variable font origin by custom paramter"""
 		master_id = None
@@ -870,10 +869,10 @@ condition_list, replacement_list = getConditionsFromOT(font)
 		# hhea table
 
 		ufo.info.openTypeHheaAscender = int(
-			master.customParameters["hheaAscender"])
+			master.customParameters["hheaAscender"]) if master.customParameters["hheaAscender"] else None
 		ufo.info.openTypeHheaDescender = int(
-			master.customParameters["hheaDescender"])
-		ufo.info.openTypeHheaLineGap = int(master.customParameters["hheaLineGap"])
+			master.customParameters["hheaDescender"]) if master.customParameters["hheaDescender"] else None
+		ufo.info.openTypeHheaLineGap = int(master.customParameters["hheaLineGap"]) if master.customParameters["hheaLineGap"] else None
 		# todo
 		# ufo.info.openTypeHheaCaretSlopeRise
 		# ufo.info.openTypeHheaCaretSlopeRun
@@ -886,7 +885,7 @@ condition_list, replacement_list = getConditionsFromOT(font)
 
 		for info in font.properties:
 			if info.key == "vendorID":
-				ufo.info.openTypeOS2VendorID = info.value
+				ufo.info.openTypeOS2VendorID = info.value if info.value else None
 
 		#ufo.info.openTypeOS2Panose = 
 		#ufo.info.openTypeOS2FamilyClass = 
@@ -894,25 +893,26 @@ condition_list, replacement_list = getConditionsFromOT(font)
 		#ufo.info.openTypeOS2CodePageRanges = 
 
 		ufo.info.openTypeOS2TypoAscender = int(
-			master.customParameters["typoAscender"])
+			master.customParameters["typoAscender"]) if master.customParameters["typoAscender"] else None
 		ufo.info.openTypeOS2TypoDescender = int(
-			master.customParameters["typoDescender"])
+			master.customParameters["typoDescender"]) if master.customParameters["typoDescender"] else None
 		
-		ufo.info.openTypeOS2TypoLineGap = int(master.customParameters["typoLineGap"])
-		ufo.info.openTypeOS2WinAscent = int(master.customParameters["winAscent"])
-		ufo.info.openTypeOS2WinDescent = int(master.customParameters["winDescent"])
+		ufo.info.openTypeOS2TypoLineGap = int(master.customParameters["typoLineGap"]) if master.customParameters["typoLineGap"] else None
+		ufo.info.openTypeOS2WinAscent = int(master.customParameters["winAscent"]) if master.customParameters["winAscent"] else None
+		ufo.info.openTypeOS2WinDescent = int(master.customParameters["winDescent"]) if master.customParameters["winDescent"] else None
 
-		#ufo.info.openTypeOS2Type = 
-		#ufo.info.openTypeOS2SubscriptXSize = 
-		#ufo.info.openTypeOS2SubscriptYSize = 
-		#ufo.info.openTypeOS2SubscriptXOffset = 
-		#ufo.info.openTypeOS2SubscriptYOffset = 
-		#ufo.info.openTypeOS2SuperscriptXSize = 
-		#ufo.info.openTypeOS2SuperscriptYSize = 
-		#ufo.info.openTypeOS2SuperscriptXOffset = 
-		#ufo.info.openTypeOS2SuperscriptYOffset = 
-		#ufo.info.openTypeOS2StrikeoutSize = 
-		#ufo.info.openTypeOS2StrikeoutPosition = 
+		ufo.info.openTypeOS2Type = [int(font.customParameters["fsType"]["value"])] if font.customParameters["fsType"] and font.customParameters["fsType"]["value"] else [0]
+		ufo.info.openTypeOS2SubscriptXSize = int(master.customParameters["subscriptXSize"]) if master.customParameters["subscriptXSize"] else None
+		ufo.info.openTypeOS2SubscriptYSize = int(master.customParameters["subscriptYSize"]) if master.customParameters["subscriptYSize"] else None
+		ufo.info.openTypeOS2SubscriptXOffset = int(master.customParameters["subscriptXOffset"]) if master.customParameters["subscriptXOffset"] else None
+		ufo.info.openTypeOS2SubscriptYOffset = int(master.customParameters["subscriptYOffset"]) if master.customParameters["subscriptYOffset"] else None
+		ufo.info.openTypeOS2SuperscriptXSize = int(master.customParameters["subscriptYOffset"]) if master.customParameters["subscriptYOffset"] else None
+
+		ufo.info.openTypeOS2SuperscriptYSize = int(master.customParameters["superscriptYSize"]) if master.customParameters["superscriptYSize"] else None
+		ufo.info.openTypeOS2SuperscriptXOffset = int(master.customParameters["superscriptXOffset"]) if master.customParameters["superscriptXOffset"] else None
+		ufo.info.openTypeOS2SuperscriptYOffset = int(master.customParameters["superscriptYOffset"]) if master.customParameters["superscriptXOffset"] else None
+		ufo.info.openTypeOS2StrikeoutSize = int(master.customParameters["strikeoutSize"]) if master.customParameters["strikeoutSize"] else None
+		ufo.info.openTypeOS2StrikeoutPosition = int(master.customParameters["strikeoutPosition"]) if master.customParameters["strikeoutPosition"] else None
 
 		# vhea table
 
@@ -924,13 +924,13 @@ condition_list, replacement_list = getConditionsFromOT(font)
 		#ufo.info.openTypeVheaCaretOffset = 
 
 		# postScript 
-		#ufo.info.postscriptFontName = 
-		#ufo.info.postscriptFullName = 
-		#ufo.info.postscriptSlantAngle = 
-		#ufo.info.postscriptUniqueID = 
-		#ufo.info.postscriptUnderlineThickness = 
-		#ufo.info.postscriptUnderlinePosition = 
-		#ufo.info.postscriptIsFixedPitch = 
+		# ufo.info.postscriptFontName =  font.fontName hmm wait no thats on instances...
+		# ufo.info.postscriptFullName = font.fullName
+		#ufo.info.postscriptSlantAngle = 10
+		ufo.info.postscriptUniqueID = font.customParameters["uniqueID"] if font.customParameters["uniqueID"] else None
+		ufo.info.postscriptUnderlineThickness = int(master.customParameters["underlineThickness"]) if master.customParameters["underlineThickness"] else None
+		ufo.info.postscriptUnderlinePosition = int(master.customParameters["underlinePosition"]) if master.customParameters["underlinePosition"] else None
+		ufo.info.postscriptIsFixedPitch = bool(font.customParameters["isFixedPitch"]) if font.customParameters["isFixedPitch"] else None
 
 		#ufo.info.postscriptBlueValues = 
 		#ufo.info.postscriptOtherBlues = 
@@ -939,9 +939,10 @@ condition_list, replacement_list = getConditionsFromOT(font)
 		#ufo.info.postscriptStemSnapH = 
 		#ufo.info.postscriptStemSnapV = 
 
-		#ufo.info.postscriptBlueFuzz = 
-		#ufo.info.postscriptBlueShift = 
-		#ufo.info.postscriptBlueScale = 
+		ufo.info.postscriptBlueFuzz = float(font.customParameters["blueFuzz"]) if font.customParameters["blueFuzz"] else None
+		ufo.info.postscriptBlueShift = float(font.customParameters["blueShift"]) if font.customParameters["blueShift"] else None
+		ufo.info.postscriptBlueScale = float(font.customParameters["blueScale"]) if font.customParameters["blueScale"] else None
+
 		#ufo.info.postscriptForceBold = 
 		#ufo.info.postscriptDefaultWidthX = 
 		#ufo.info.postscriptNominalWidthX = 
@@ -1256,6 +1257,7 @@ include(../features/classes.fea);
 					temp_project_folder, self.getFamilyName(font, "variable").replace(" ", ""))
 				variable_designspace_doc.write(variable_designspace_path)
 			self.w.status.set(("Building UFOs for masters...") + "\n" + self.w.status.get())
+			print(" ")
 			# We only need one set of masters
 			if self.to_build["variable"] and not self.to_build["static"]:
 				self.exportUFOMasters(font, temp_project_folder, "variable")

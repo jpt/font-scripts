@@ -29,7 +29,6 @@ from fontParts.fontshell.lib import RLib
 # Todo:
 # - Hinting: public.postscript.hints, public.truetype.instructions, public.verticalOrigin, public.truetype.roundOffsetToGrid, public.truetype.useMyMetrics	
 # - Metainfo.plist: creator, formatVersion, formatVersionMinor
-# - Add RoboFont production name substitutions (not convert)?
 # - One designspace for VF? Have to look into designspace 5 spec more closely
 # - Finish the metadata in addFontInfoToUfo
 # - Copy lib.plist keys
@@ -37,10 +36,25 @@ from fontParts.fontshell.lib import RLib
 # - Add support for bracket layers (in addition to OT based subs, which are already supported)
 # - Copy Glyph-level layers over (but this is potentially a non-goal)
 # - Images in glyphs
-# - Mayyyyyvbe add support for production names (this might be really hard because of features, and fontmake does it, so who cares?)
 # - Decompose smart stuff
-# - Glyphs hints to VTT Talk? Maybe too insane. Can we get hints by generating masters instances and then creating CVT table or something? there is a CVT custom param.
 # - More elaborate build script possibilities (add size table that we're outputting but not importing in masters, for example; other tables too)
+# - public.glyphOrder
+# - public.skipExportGlyphs
+# - public.openTypeMeta
+# - public.openTypeCategories
+# - public.unicodeVariationSequences
+# - public.objectLibs
+# com.schriftgestaltung.disablesAutomaticAlignment
+# com.schriftgestaltung.font.customParameters = []
+# com.schriftgestaltung.font.userData = dict()
+# com.schriftgestaltung.fontMaster.customParameters = []
+# com.schriftgestaltung.fontMasterID
+# com.schriftgestaltung.glyphOrder
+# com.schriftgestaltung.master.name
+# com.schriftgestaltung.useNiceNames
+# com.schriftgestaltung.weightValue
+# com.schriftgestaltung.widthValue
+
 
 class ExportUFOAndDesignspace(object):
 	def __init__(self):
@@ -824,7 +838,7 @@ condition_list, replacement_list = getConditionsFromOT(font)
 		# Misc
 		ufo.info.note = font.note
 
-		# Gasp todo ? not sure
+		# Gasp todo
 		#ufo.info.openTypeGaspRangeRecords = []
 		#ufo.info.rangeMaxPPEM = dict()
 		#ufo.info.rangeGaspBehavior = []
@@ -1072,6 +1086,10 @@ include(../features/classes.fea);
 	# 		print(layer)
 	# 	return ufo
 
+	def addSkipExport(self,font,ufo):
+		skip_export = [g for g in font.glyphs if g.export == False]
+
+
 	def exportUFOMasters(self, font, dest, format):
 		__doc__ = """Provided a font object and a destination, exports a UFO for each master in the UFO, not including special layers (for that use generateMastersAtBraces)"""
 		for master in font.masters:
@@ -1083,6 +1101,7 @@ include(../features/classes.fea);
 			ufo = self.addKerning(font, ufo)
 			ufo = self.addFeatureInclude(ufo, font)
 			ufo = self.addPostscriptNames(font, ufo)
+			ufo = self.addSkipExport(font, ufo)
 			# todo
 			# if master.id == self.getOriginMaster(font) and self.brace_layers_as_layers == True:
 			# 	ufo = self.addLayerMastersToUFO(font,ufo)

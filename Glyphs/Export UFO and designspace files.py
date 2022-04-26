@@ -24,8 +24,11 @@ from fontParts.fontshell.contour import RContour
 from fontParts.fontshell.component import RComponent
 from fontParts.fontshell.anchor import RAnchor
 from fontParts.fontshell.guideline import RGuideline
+from fontParts.fontshell.lib import RLib
 
 # Todo:
+# - Hinting: public.postscript.hints, public.truetype.instructions, public.verticalOrigin, public.truetype.roundOffsetToGrid, public.truetype.useMyMetrics	
+# - Metainfo.plist: creator, formatVersion, formatVersionMinor
 # - Add RoboFont production name substitutions (not convert)?
 # - One designspace for VF? Have to look into designspace 5 spec more closely
 # - Finish the metadata in addFontInfoToUfo
@@ -1079,6 +1082,7 @@ include(../features/classes.fea);
 			ufo = self.addGroups(font, ufo)
 			ufo = self.addKerning(font, ufo)
 			ufo = self.addFeatureInclude(ufo, font)
+			ufo = self.addPostscriptNames(font, ufo)
 			# todo
 			# if master.id == self.getOriginMaster(font) and self.brace_layers_as_layers == True:
 			# 	ufo = self.addLayerMastersToUFO(font,ufo)
@@ -1176,6 +1180,16 @@ include(../features/classes.fea);
 		f = open(c_dest, "w")
 		f.write(font_classes)
 		f.close()
+
+	def addPostscriptNames(self,font,ufo):
+		lib = RLib()
+		lib["public.postscriptNames"] = dict()
+		glyphs = [g for g in font.glyphs if g.export == True]
+		for glyph in glyphs:
+			if glyph.productionName is not None and glyph.productionName != glyph.name:
+				lib["public.postscriptNames"][glyph.name] = glyph.productionName
+		ufo.lib.update(lib)
+		return ufo
 
 
 	def main(self):

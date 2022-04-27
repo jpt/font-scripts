@@ -1,6 +1,6 @@
 # MenuTitle: Export UFO and designspace files
 __doc__ = """
-Exports UFO and designspace files. Supports substitutions defined in OT features, but not bracket layers. Brace layers supported, but not yet as "support layers" for Skateboard. Thanks to Rafał Buchner, Joancarles Casasín (https://robofont.com/documentation/how-tos/converting-from-glyphs-to-ufo/), and to the authors and maintainers of designspaceLib and fontParts.
+Exports UFO and designspace files. Supports substitutions defined in OT features, but not yet bracket layers. Brace layers supported, but not yet as "support layers" for Skateboard. Thanks to Rafał Buchner, Joancarles Casasín (https://robofont.com/documentation/how-tos/converting-from-glyphs-to-ufo/), and to the authors and maintainers of designspaceLib and fontParts.
 """
 
 from GlyphsApp import GSInstance
@@ -17,7 +17,7 @@ from fontTools.designspaceLib import AxisDescriptor
 from fontTools.designspaceLib import SourceDescriptor
 from fontTools.designspaceLib import InstanceDescriptor
 from fontTools.designspaceLib import RuleDescriptor
-from fontTools.designspaceLib import AxisLabelDescriptor
+#from fontTools.designspaceLib import AxisLabelDescriptor disabled for now - want more clarity on how to define userspace values for names of axis location inside Glyphs
 from fontTools.designspaceLib import LocationLabelDescriptor
 from fontParts.world import NewFont
 from fontParts.fontshell.contour import RContour
@@ -532,18 +532,19 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 				style_name = instance.customParameters["Optical Size"].split(";")[-1]
 			else:
 				style_name = instance.name
-				
-			if instance.customParameters["Elidable STAT Axis Value Name"] and instance.customParameters["Elidable STAT Axis Value Name"] == axis_tag:
-				elidable = True
-			else:
-				elidable = False
-			user_min = axis_list[0][1]
-			user_max = axis_list[-1][1]
-			user_val = axis_range[instance.axes[axis_index]]
-			label = AxisLabelDescriptor(name=style_name,userValue=user_val, userMinimum=user_min, userMaximum=user_max,elidable=elidable)
-			if user_val not in label_user:
-				label_user.append(user_val)
-				labels.append(label)
+
+			if instance.customParameters["Style Name as STAT entry"] and instance.customParameters["Style Name as STAT entry"] == axis_tag:
+				if instance.customParameters["Elidable STAT Axis Value Name"]:
+					elidable = True
+				else:
+					elidable = False
+				user_min = axis_list[0][1]
+				user_max = axis_list[-1][1]
+				user_val = axis_range[instance.axes[axis_index]]
+				label = AxisLabelDescriptor(name=style_name,userValue=user_val, userMinimum=user_min, userMaximum=user_max,elidable=elidable)
+				if user_val not in label_user:
+					label_user.append(user_val)
+					labels.append(label)
 		return labels
 
 		
@@ -576,9 +577,12 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 				a.name = axis.name
 				a.tag = axis.axisTag
 
-				label_list = self.getAxisLabelList(font,i,format)
-				for label in label_list:
-					a.axisLabels.append(label)
+				#
+				# For Format 2 STAT, but see note at top, diabled for now
+				#
+				# label_list = self.getAxisLabelList(font,i,format)
+				# for label in label_list:
+				# 	a.axisLabels.append(label)
 				
 				doc.addAxis(a)
 
@@ -661,7 +665,7 @@ condition_list, replacement_list = getConditionsFromOT(font)
 		for instance in font.instances:
 			if not instance.active:
 				continue
-			if not instance.familyName:  # skip Variable Font Setting, which is an instance, todo check by type 
+			if instance.type == 1:  # skip Variable Font Setting
 				continue
 			ins = InstanceDescriptor()
 			postScriptName = instance.fontName
@@ -813,6 +817,15 @@ condition_list, replacement_list = getConditionsFromOT(font)
 			ufo.groups[group_name] = group_glyphs
 		return ufo
 
+	def formatValue(self,value,type):
+		if not value:
+			return None
+		if type == "int":
+			return int(value)
+		elif type == "float":
+			return float(value)
+		elif type == "bool":
+			return bool(value)
 
 	def addFontInfoToUfo(self,master,ufo):
 		__doc__ = """Provided a GSFontMaster and a UFO, returns a UFO with OpenType metadata from that master (and its parent GSFont)"""
@@ -843,10 +856,9 @@ condition_list, replacement_list = getConditionsFromOT(font)
 
 		# Head table
 		ufo.info.openTypeHeadCreated = font.date.strftime("%Y/%m/%d %H:%M:%S")
-		# todo ?
-		#ufo.info.openTypeHeadLowestRecPPEM = ?
+		# ufo.info.openTypeHeadLowestRecPPEM = ?
 		# ufo.info.openTypeHeadFlags = ?
-		# ufo.info.created reated can be calculated by subtracting the 12:00 midnight, January 1, 1904 (as specified in the head table documentation) from the date stored at openTypeHeadCreated.
+		# ufo.info.created reated can be calculated by subtracting the 12:00 midnight, January 1, 1904 (as specified in the head table documentation) from the date stored at openTypeHeadCreated. —
 
 		# name table - some of these may be instance specific?
 		ufo.info.openTypeNameDesigner = font.designer
@@ -859,64 +871,62 @@ condition_list, replacement_list = getConditionsFromOT(font)
 				ufo.info.openTypeNameLicenseURL = info.value
 		#ufo.info.openTypeNameVersion = 
 		#ufo.info.openTypeNameUniqueID = 
-		#ufo.info.openTypeNameDescription = 
+		ufo.info.openTypeNameDescription = font.description
 		#ufo.info.openTypeNamePreferredFamilyName = 
 		#ufo.info.openTypeNamePreferredSubfamilyName = 
-		#ufo.info.openTypeNameCompatibleFullName = 
-		#ufo.info.openTypeNameSampleText = 
+		ufo.info.openTypeNameCompatibleFullName = font.compatibleFullName
+		ufo.info.openTypeNameSampleText = font.sampleText
 		# These are for instances only, no? Ghmmmmmmm
-		#ufo.info.openTypeNameWWSFamilyName =
+		ufo.info.openTypeNameWWSFamilyName = font.customParameters["WWS Family Name"]
 		#ufo.info.openTypeNameWWSSubfamilyName =
 
 		# hhea table
 
-		ufo.info.openTypeHheaAscender = int(
-			master.customParameters["hheaAscender"]) if master.customParameters["hheaAscender"] else None
-		ufo.info.openTypeHheaDescender = int(
-			master.customParameters["hheaDescender"]) if master.customParameters["hheaDescender"] else None
-		ufo.info.openTypeHheaLineGap = int(master.customParameters["hheaLineGap"]) if master.customParameters["hheaLineGap"] else None
+		ufo.info.openTypeHheaAscender = self.formatValue(master.customParameters["hheaAscender"],"int")
+		ufo.info.openTypeHheaDescender =self.formatValue(master.customParameters["hheaDescender"],"int")
+		ufo.info.openTypeHheaLineGap = self.formatValue(master.customParameters["hheaLineGap"],"int")
 		# todo
 		# ufo.info.openTypeHheaCaretSlopeRise
 		# ufo.info.openTypeHheaCaretSlopeRun
 		# ufo.info.openTypeHheaCaretOffset
 		
 		# OS/2 table
-		#ufo.info.openTypeOS2WidthClass = 
-		#ufo.info.openTypeOS2WeightClass = 
-		#ufo.info.openTypeOS2Selection = 
+		#ufo.info.openTypeOS2WidthClass = ?
+		#ufo.info.openTypeOS2WeightClass =  ? 
+		#ufo.info.openTypeOS2Selection = fsSelection... not sure
 
 		for info in font.properties:
 			if info.key == "vendorID":
 				ufo.info.openTypeOS2VendorID = info.value if info.value else None
 
-		#ufo.info.openTypeOS2Panose = 
-		#ufo.info.openTypeOS2FamilyClass = 
+		ufo.info.openTypeOS2Panose = [int(p) for p in font.customParameters["panose"]]
+		#ufo.info.openTypeOS2FamilyClass =  ? 
 		#ufo.info.openTypeOS2UnicodeRanges =
 		#ufo.info.openTypeOS2CodePageRanges = 
 
-		ufo.info.openTypeOS2TypoAscender = int(
-			master.customParameters["typoAscender"]) if master.customParameters["typoAscender"] else None
-		ufo.info.openTypeOS2TypoDescender = int(
-			master.customParameters["typoDescender"]) if master.customParameters["typoDescender"] else None
-		
-		ufo.info.openTypeOS2TypoLineGap = int(master.customParameters["typoLineGap"]) if master.customParameters["typoLineGap"] else None
-		ufo.info.openTypeOS2WinAscent = int(master.customParameters["winAscent"]) if master.customParameters["winAscent"] else None
-		ufo.info.openTypeOS2WinDescent = int(master.customParameters["winDescent"]) if master.customParameters["winDescent"] else None
+		ufo.info.openTypeOS2TypoAscender = self.formatValue(master.customParameters["typoAscender"],"int")
+		ufo.info.openTypeOS2TypoDescender = self.formatValue(master.customParameters["typoDescender"],"int")
+		ufo.info.openTypeOS2TypoLineGap = self.formatValue(master.customParameters["typoLineGap"],"int")
+
+		ufo.info.openTypeOS2WinAscent = self.formatValue(master.customParameters["winAscent"],"int")
+		ufo.info.openTypeOS2WinDescent = self.formatValue(master.customParameters["winDescent"],"int")
 
 		ufo.info.openTypeOS2Type = [int(font.customParameters["fsType"]["value"])] if font.customParameters["fsType"] and font.customParameters["fsType"]["value"] else [0]
-		ufo.info.openTypeOS2SubscriptXSize = int(master.customParameters["subscriptXSize"]) if master.customParameters["subscriptXSize"] else None
-		ufo.info.openTypeOS2SubscriptYSize = int(master.customParameters["subscriptYSize"]) if master.customParameters["subscriptYSize"] else None
-		ufo.info.openTypeOS2SubscriptXOffset = int(master.customParameters["subscriptXOffset"]) if master.customParameters["subscriptXOffset"] else None
-		ufo.info.openTypeOS2SubscriptYOffset = int(master.customParameters["subscriptYOffset"]) if master.customParameters["subscriptYOffset"] else None
-		ufo.info.openTypeOS2SuperscriptXSize = int(master.customParameters["subscriptYOffset"]) if master.customParameters["subscriptYOffset"] else None
+		ufo.info.openTypeOS2SubscriptXSize = self.formatValue(master.customParameters["subscriptXSize"],"int")
+		ufo.info.openTypeOS2SubscriptYSize = self.formatValue(master.customParameters["subscriptYSize"],"int")
+		ufo.info.openTypeOS2SubscriptXOffset = self.formatValue(master.customParameters["subscriptXOffset"],"int")
+		ufo.info.openTypeOS2SubscriptYOffset = self.formatValue(master.customParameters["subscriptYOffset"],"int")
+		ufo.info.openTypeOS2SuperscriptXSize = self.formatValue(master.customParameters["subscriptYOffset"],"int")
 
-		ufo.info.openTypeOS2SuperscriptYSize = int(master.customParameters["superscriptYSize"]) if master.customParameters["superscriptYSize"] else None
-		ufo.info.openTypeOS2SuperscriptXOffset = int(master.customParameters["superscriptXOffset"]) if master.customParameters["superscriptXOffset"] else None
-		ufo.info.openTypeOS2SuperscriptYOffset = int(master.customParameters["superscriptYOffset"]) if master.customParameters["superscriptXOffset"] else None
-		ufo.info.openTypeOS2StrikeoutSize = int(master.customParameters["strikeoutSize"]) if master.customParameters["strikeoutSize"] else None
-		ufo.info.openTypeOS2StrikeoutPosition = int(master.customParameters["strikeoutPosition"]) if master.customParameters["strikeoutPosition"] else None
+		ufo.info.openTypeOS2SuperscriptYSize = self.formatValue(master.customParameters["superscriptYSize"],"int")
+		ufo.info.openTypeOS2SuperscriptXOffset = self.formatValue(master.customParameters["superscriptXOffset"],"int")
+		ufo.info.openTypeOS2SuperscriptYOffset = self.formatValue(master.customParameters["superscriptYOffset"],"int")
+		ufo.info.openTypeOS2StrikeoutSize = self.formatValue(master.customParameters["strikeoutSize"],"int")
+		ufo.info.openTypeOS2StrikeoutPosition = self.formatValue(master.customParameters["strikeoutPosition"],"int")
 
 		# vhea table
+
+	    # tcheck font.customParams["Use Typo Metrics"] / convert upm
 
 		#ufo.info.openTypeVheaVertTypoAscender = 
 		#ufo.info.openTypeVheaVertTypoDescender = 
@@ -928,22 +938,22 @@ condition_list, replacement_list = getConditionsFromOT(font)
 		# postScript 
 		# ufo.info.postscriptFontName =  font.fontName hmm wait no thats on instances...
 		# ufo.info.postscriptFullName = font.fullName
-		#ufo.info.postscriptSlantAngle = 10
-		ufo.info.postscriptUniqueID = font.customParameters["uniqueID"] if font.customParameters["uniqueID"] else None
-		ufo.info.postscriptUnderlineThickness = int(master.customParameters["underlineThickness"]) if master.customParameters["underlineThickness"] else None
-		ufo.info.postscriptUnderlinePosition = int(master.customParameters["underlinePosition"]) if master.customParameters["underlinePosition"] else None
-		ufo.info.postscriptIsFixedPitch = bool(font.customParameters["isFixedPitch"]) if font.customParameters["isFixedPitch"] else None
+		#ufo.info.postscriptSlantAngle = whats a good default? no way to set in glyphs?
+		ufo.info.postscriptUniqueID = font.customParameters["uniqueID"]
+		ufo.info.postscriptUnderlineThickness = self.formatValue(master.customParameters["underlineThickness"],"int")
+		ufo.info.postscriptUnderlinePosition = self.formatValue(master.customParameters["underlinePosition"],"int")
+		ufo.info.postscriptIsFixedPitch =  self.formatValue(font.customParameters["isFixedPitch"],"bool")
 
-		#ufo.info.postscriptBlueValues = 
-		#ufo.info.postscriptOtherBlues = 
-		#ufo.info.postscriptFamilyBlues = 
+		ufo.info.postscriptBlueValues = [int(b) for b in master.blueValues]
+		ufo.info.postscriptOtherBlues = [int(b) for b in master.otherBlues]
+		#ufo.info.postscriptFamilyBlues = to calc
 		#ufo.info.postscriptFamilyOtherBlues = 
-		#ufo.info.postscriptStemSnapH = 
-		#ufo.info.postscriptStemSnapV = 
+		ufo.info.postscriptStemSnapH = [float(stem) for i,stem in enumerate(master.stems) if font.stems[i].horizontal]
+		ufo.info.postscriptStemSnapV = [float(stem) for i,stem in enumerate(master.stems) if not font.stems[i].horizontal]
 
-		ufo.info.postscriptBlueFuzz = float(font.customParameters["blueFuzz"]) if font.customParameters["blueFuzz"] else None
-		ufo.info.postscriptBlueShift = float(font.customParameters["blueShift"]) if font.customParameters["blueShift"] else None
-		ufo.info.postscriptBlueScale = float(font.customParameters["blueScale"]) if font.customParameters["blueScale"] else None
+		ufo.info.postscriptBlueFuzz = self.formatValue(font.customParameters["blueFuzz"],"float")
+		ufo.info.postscriptBlueShift = self.formatValue(font.customParameters["blueShift"],"float")
+		ufo.info.postscriptBlueScale = self.formatValue(font.customParameters["blueScale"],"float")
 
 		#ufo.info.postscriptForceBold = 
 		#ufo.info.postscriptDefaultWidthX = 
@@ -956,16 +966,8 @@ condition_list, replacement_list = getConditionsFromOT(font)
 		#ufo.info.macintoshFONDFamilyID = 
 		#ufo.info.macintoshFONDName = 
 
-		# More todo (look into, else copy as params to lib.plist):
-		#
-		# fsType
-		# Use Typo metrics
-		# Use line breaks
-		# WWS names - how to do since this is per-master vs instance? 
-		# Extension kerning
-		# Hints from master
-		#
-		#
+		# todo font level custom params:
+		# Extension kerning - GPOS
 		# TTFZones / TTFBlueFuzz ??
 
 

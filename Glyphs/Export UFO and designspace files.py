@@ -27,6 +27,7 @@ from fontParts.fontshell.guideline import RGuideline
 from fontParts.fontshell.lib import RLib
 
 # Todo:
+# - Font-level Guidelines
 # - Hinting: public.postscript.hints, public.truetype.instructions, public.verticalOrigin, public.truetype.roundOffsetToGrid, public.truetype.useMyMetrics	
 # - Metainfo.plist: creator, formatVersion, formatVersionMinor
 # - One designspace for VF? Have to look into designspace 5 spec more closely

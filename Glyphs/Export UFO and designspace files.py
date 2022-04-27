@@ -945,8 +945,8 @@ condition_list, replacement_list = getConditionsFromOT(font)
 		ufo.info.postscriptUnderlinePosition = self.formatValue(master.customParameters["underlinePosition"],"int")
 		ufo.info.postscriptIsFixedPitch =  self.formatValue(font.customParameters["isFixedPitch"],"bool")
 
-		ufo.info.postscriptBlueValues = [int(b) for b in master.blueValues]
-		ufo.info.postscriptOtherBlues = [int(b) for b in master.otherBlues]
+		ufo.info.postscriptBlueValues = [float(b) for b in master.blueValues]
+		ufo.info.postscriptOtherBlues = [float(b) for b in master.otherBlues]
 		#ufo.info.postscriptFamilyBlues = to calc
 		#ufo.info.postscriptFamilyOtherBlues = 
 		ufo.info.postscriptStemSnapH = [float(stem) for i,stem in enumerate(master.stems) if font.stems[i].horizontal]

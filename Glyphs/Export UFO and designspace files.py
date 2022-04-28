@@ -524,10 +524,14 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 			#
 			# tricky if there's an opsz... 
 			#
+			# potentially, like:
+			#
 			# if format == "variable" and instance.variableStyleName:
 			#	style_name = instance.variableStyleName
 			# else:
 			#	style_name = instance.name
+			# 
+			# but also subfamily, etc...
 
 			if axis_tag == "opsz" and instance.customParameters["Optical Size"]:
 				style_name = instance.customParameters["Optical Size"].split(";")[-1]
@@ -780,8 +784,6 @@ condition_list, replacement_list = getConditionsFromOT(font)
 			brace_font.kerningVertical = {}
 			ufo_file_path = os.path.join(temp_project_folder, ufo_file_name)
 			ufo = self.buildUfoFromMaster(brace_font.masters[0], brace_font.glyphs)
-			# ufo = self.addPostscriptNames(font, ufo)
-			# ufo = self.addGlyphOrder(font, ufo)
 			ufo.save(ufo_file_path)
 
 	

@@ -30,14 +30,15 @@ from fontParts.fontshell.guideline import RGuideline
 
 # Todo:
 # - Font-level Guidelines
+# - Decompose the rest of the smart stuff (corners?), right now it just does components 
+# - GDEF, mark, mkmk, kern features 
 # - Hinting: public.verticalOrigin? public.truetype.roundOffsetToGrid? public.truetype.useMyMetrics?
 # - Metainfo.plist: creator, formatVersion, formatVersionMinor
 # - One designspace for VF? Have to look into designspace 5 spec more closely
 # - Finish the metadata in addFontInfoToUfo
 # - Add support for bracket layers (in addition to OT based subs, which are already supported)
 # - Images in glyphs
-# - Follow up on Stat (AxisLabelDescriptor) stuff
-# - Decompose the rest of the smart stuff, right now it just does components
+# - Follow up on STAT (AxisLabelDescriptor) stuff whenever Glyphs has more capabilities
 # - More elaborate build script possibilities (add size table that we're outputting but not importing in masters, for example; other tables too; add remove overlaps etc to build scripts)
 # - public.openTypeMeta
 # - public.openTypeCategories

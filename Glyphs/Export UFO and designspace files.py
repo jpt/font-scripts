@@ -30,8 +30,8 @@ from fontParts.fontshell.guideline import RGuideline
 
 # Todo:
 # - Font-level Guidelines
-# - Decompose the rest of the smart stuff (corners?), right now it just does components 
 # - GDEF, mark, mkmk, kern features 
+# - make combining marks 0 width
 # - Hinting: public.verticalOrigin? public.truetype.roundOffsetToGrid? public.truetype.useMyMetrics?
 # - Metainfo.plist: creator, formatVersion, formatVersionMinor
 # - One designspace for VF? Have to look into designspace 5 spec more closely
@@ -1301,6 +1301,12 @@ include(../features/classes.fea);
 							for component in layer.components:
 								if component.smartComponentValues:
 									component.decompose()
+	
+	def decomposeCorners(self,font):
+		for glyph in font.glyphs:
+			for layer in glyph.layers:
+				if layer.isMasterLayer or layer.isSpecialLayer:
+					layer.decomposeCorners()
 					
 	def main(self):
 		# use a copy to prevent modifying the open Glyphs file
@@ -1311,6 +1317,9 @@ include(../features/classes.fea);
 		self.updateFeatures(font)
 		# decompose smart components
 		self.decomposeSmartComponents(font)
+		# decompose smart corners
+		self.decomposeCorners(font)
+
 		# remove overlaps and decompose glyphs if set at top
 		self.removeOverlaps(font)
 		self.decomposeGlyphs(font)

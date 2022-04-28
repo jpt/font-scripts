@@ -3,7 +3,6 @@ __doc__ = """
 Exports UFO and designspace files. Supports substitutions defined in OT features, but not yet bracket layers. Brace layers supported, but not yet as "support layers" for Skateboard. Thanks to Rafał Buchner, Joancarles Casasín (https://robofont.com/documentation/how-tos/converting-from-glyphs-to-ufo/), and to the authors and maintainers of designspaceLib and fontParts.
 """
 
-import ssl
 from GlyphsApp import GSInstance
 import re
 import os
@@ -18,9 +17,8 @@ from fontTools.designspaceLib import AxisDescriptor
 from fontTools.designspaceLib import SourceDescriptor
 from fontTools.designspaceLib import InstanceDescriptor
 from fontTools.designspaceLib import RuleDescriptor
-#from fontTools.designspaceLib import AxisLabelDescriptor disabled for now - want more clarity on how to define userspace values for names of axis location inside Glyphs
+#from fontTools.designspaceLib import AxisLabelDescriptor disabled for now - https://forum.glyphsapp.com/t/question-about-stat-axis-value-tables/22400
 from fontTools.designspaceLib import LocationLabelDescriptor
-#from fontTools.designspaceLib import AxisLabelDescriptor
 from fontParts.world import NewFont
 from fontParts.fontshell.lib import RLib
 from fontParts.fontshell.glyph import RGlyph
@@ -37,11 +35,10 @@ from fontParts.fontshell.guideline import RGuideline
 # - One designspace for VF? Have to look into designspace 5 spec more closely
 # - Finish the metadata in addFontInfoToUfo
 # - Add support for bracket layers (in addition to OT based subs, which are already supported)
-# - Copy Glyph-level layers over (but this is potentially a non-goal)
 # - Images in glyphs
 # - Follow up on Stat (AxisLabelDescriptor) stuff
-# - Decompose smart stuff
-# - More elaborate build script possibilities (add size table that we're outputting but not importing in masters, for example; other tables too)
+# - Decompose the rest of the smart stuff, right now it just does components
+# - More elaborate build script possibilities (add size table that we're outputting but not importing in masters, for example; other tables too; add remove overlaps etc to build scripts)
 # - public.openTypeMeta
 # - public.openTypeCategories
 # - public.unicodeVariationSequences
@@ -94,12 +91,6 @@ class ExportUFOAndDesignspace(object):
 		yPos = yPos + spacer * 1 + ui_height
 
 		self.w.checkBox = vanilla.CheckBox((margin_x, yPos, -margin_x, ui_height), "Generate fontmake build scripts", callback=self.checkBoxCallback, value=True, sizeStyle="small")
-
-		# todo
-		# 
-		# yPos = yPos +  ui_height
-
-		# self.w.keepLibCheckbox = vanilla.CheckBox((margin_x, yPos, -margin_x, ui_height), "Keep Glyphs info in designspace lib", callback=self.checkBoxCallback, value=False, sizeStyle="small")
 
 		yPos = yPos + spacer * 1 + ui_height
 																										
@@ -434,8 +425,6 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 		return sources
 
 
-	# todo make these one function
-
 	def getAxisMapToBuild(self, font):
 		__doc__ = """Provided a font object, iterate over the GSInstances and return a dict compatible with the Axis Mappings custom parameter, based on the Axis Location custom parameter of those GSInstances"""
 		axis_map = dict()
@@ -455,26 +444,24 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 		
 		return axis_map
 
-	# Slightly different from above, needed in getLabels, to fix
-	#
-	# def getAxisMap(self, font):
-	# 	__doc__ = """Provided a font object, iterate over the GSInstances and return a dict compatible with the Axis Mappings custom parameter, based on the Axis Location custom parameter of those GSInstances"""
-	# 	axis_map = dict()
-	# 	for instance in font.instances:
-	# 		if instance.customParameters["Axis Location"]:
-	# 			if instance.type == 0:
-	# 				for i, internal in enumerate(instance.axes):
-	# 					external = instance.customParameters["Axis Location"][i]['Location']
-	# 					axis_tag = font.axes[i].axisTag
-	# 					try:
-	# 						axis_map[axis_tag][internal] = external
-	# 					except:
-	# 						axis_map[axis_tag] = dict()
-	# 						axis_map[axis_tag][internal] = external
-	# 	if len(axis_map):
-	# 		return axis_map
-	# 	else:
-	# 	 	return None
+	def getAxisInstanceMap(self, font):
+		__doc__ = """Provided a font object, iterate over the GSInstances and return a dict compatible with the Axis Mappings custom parameter, based on the Axis Location custom parameter of those GSInstances"""
+		axis_map = dict()
+		for instance in font.instances:
+			if instance.customParameters["Axis Location"]:
+				if instance.type == 0:
+					for i, internal in enumerate(instance.axes):
+						external = instance.customParameters["Axis Location"][i]['Location']
+						axis_tag = font.axes[i].axisTag
+						try:
+							axis_map[axis_tag][internal] = external
+						except:
+							axis_map[axis_tag] = dict()
+							axis_map[axis_tag][internal] = external
+		if len(axis_map):
+			return axis_map
+		else:
+		 	return None
 
 
 	def getLabels(self,font,format):
@@ -518,48 +505,48 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 		return doc
 
 
-	# def getAxisLabelList(self,font,axis_index,format):
-	# 	__doc__ = "Provided a GSfont object, the index of a GSAxis, and the output format, returns a list of labels"
-	# 	axis_tag = font.axes[axis_index].axisTag
-	# 	if font.customParameters["Axis Mappings"]:
-	# 		axis_map = font.customParameters["Axis Mappings"][axis_tag]
-	# 	else:
-	# 		axis_map = self.getAxisMap(font)
+	def getAxisLabelList(self,font,axis_index,format):
+		__doc__ = "Provided a GSfont object, the index of a GSAxis, and the output format, returns a list of labels"
+		axis_tag = font.axes[axis_index].axisTag
+		if font.customParameters["Axis Mappings"]:
+			axis_map = font.customParameters["Axis Mappings"][axis_tag]
+		else:
+			axis_map = self.getAxisInstanceMap(font)
 		
-	# 	axis_range = axis_map[axis_tag]
-	# 	axis_list = list(axis_range.items())
+		axis_range = axis_map[axis_tag]
+		axis_list = list(axis_range.items())
 
-	# 	labels = []
-	# 	label_user = []
+		labels = []
+		label_user = []
 		
-	# 	instances = [instance for instance in font.instances if instance.active == True and instance.type == 0]
-	# 	for instance in instances:
-	# 		#
-	# 		# tricky if there's an opsz... 
-	# 		#
-	# 		# if format == "variable" and instance.variableStyleName:
-	# 		#	style_name = instance.variableStyleName
-	# 		# else:
-	# 		#	style_name = instance.name
+		instances = [instance for instance in font.instances if instance.active == True and instance.type == 0]
+		for instance in instances:
+			#
+			# tricky if there's an opsz... 
+			#
+			# if format == "variable" and instance.variableStyleName:
+			#	style_name = instance.variableStyleName
+			# else:
+			#	style_name = instance.name
 
-	# 		if axis_tag == "opsz" and instance.customParameters["Optical Size"]:
-	# 			style_name = instance.customParameters["Optical Size"].split(";")[-1]
-	# 		else:
-	# 			style_name = instance.name
+			if axis_tag == "opsz" and instance.customParameters["Optical Size"]:
+				style_name = instance.customParameters["Optical Size"].split(";")[-1]
+			else:
+				style_name = instance.name
 
-	# 		if instance.customParameters["Style Name as STAT entry"] and instance.customParameters["Style Name as STAT entry"] == axis_tag:
-	# 			if instance.customParameters["Elidable STAT Axis Value Name"]:
-	# 				elidable = True
-	# 			else:
-	# 				elidable = False
-	# 			user_min = axis_list[0][1]
-	# 			user_max = axis_list[-1][1]
-	# 			user_val = axis_range[instance.axes[axis_index]]
-	# 			label = AxisLabelDescriptor(name=style_name,userValue=user_val, userMinimum=user_min, userMaximum=user_max,elidable=elidable)
-	# 			if user_val not in label_user:
-	# 				label_user.append(user_val)
-	# 				labels.append(label)
-	# 	return labels
+			if instance.customParameters["Style Name as STAT entry"] and instance.customParameters["Style Name as STAT entry"] == axis_tag:
+				if instance.customParameters["Elidable STAT Axis Value Name"]:
+					elidable = True
+				else:
+					elidable = False
+				user_min = axis_list[0][1]
+				user_max = axis_list[-1][1]
+				user_val = axis_range[instance.axes[axis_index]]
+				label = AxisLabelDescriptor(name=style_name,userValue=user_val, userMinimum=user_min, userMaximum=user_max,elidable=elidable)
+				if user_val not in label_user:
+					label_user.append(user_val)
+					labels.append(label)
+		return labels
 
 		
 	def addAxes(self, doc, font, format):
@@ -1302,6 +1289,16 @@ include(../features/classes.fea);
 		return ufo
 
 
+	def decomposeSmartComponents(self,font):
+		for glyph in font.glyphs:
+			if glyph.smartComponentAxes: 
+				for layer in glyph.layers:
+					if layer.isMasterLayer or layer.isSpecialLayer:
+						if len(layer.components) > 0:
+							for component in layer.components:
+								if component.smartComponentValues:
+									component.decompose()
+					
 	def main(self):
 		# use a copy to prevent modifying the open Glyphs file
 		font = Glyphs.font.copy()
@@ -1309,6 +1306,8 @@ include(../features/classes.fea);
 		self.alignSpecialLayers(font)
 		# update any automatically generated features that need it
 		self.updateFeatures(font)
+		# decompose smart components
+		self.decomposeSmartComponents(font)
 		# remove overlaps and decompose glyphs if set at top
 		self.removeOverlaps(font)
 		self.decomposeGlyphs(font)

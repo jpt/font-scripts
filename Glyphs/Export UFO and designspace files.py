@@ -32,13 +32,12 @@ from fontParts.fontshell.guideline import RGuideline
 # - Font-level Guidelines
 # - GDEF, mark, mkmk features 
 # - make combining marks 0 width?
+# - add woff2_compress to build script
 # - Hinting: public.verticalOrigin? public.truetype.roundOffsetToGrid? public.truetype.useMyMetrics?
-# - Metainfo.plist: creator, formatVersion, formatVersionMinor
 # - One designspace for VF? Have to look into designspace 5 spec more closely
 # - Finish the metadata in addFontInfoToUfo
 # - Add support for bracket layers (in addition to OT based subs, which are already supported)
 # - Images in glyphs
-# - Follow up on STAT (AxisLabelDescriptor) stuff whenever Glyphs has more capabilities
 # - More elaborate build script possibilities (add size table that we're outputting but not importing in masters, for example; other tables too; add remove overlaps etc to build scripts)
 # - public.openTypeMeta
 # - public.openTypeCategories
@@ -121,8 +120,6 @@ class ExportUFOAndDesignspace(object):
 			"static": True,
 		}
 
-
-
 		self.to_add_build_script = True  # adds a minimal build script to the output dir
 		self.brace_layers_as_layers = True # these are not in sync with default button values above, make sure to change both
 
@@ -133,15 +130,32 @@ class ExportUFOAndDesignspace(object):
 		self.keep_glyphs_lib = False
 		self.production_names = False
 		self.decompose_smart  = False
-        
+
 		self.w.open()
 
 	# callback functions for vanilla
 
 	def exportButton(self, sender):
+
+		# get the glyphs to decompose etc
 		self.to_decompose = self.w.decomposeField.get().split(" ")
 		self.to_remove_overlap = self.w.overlapField.get().split(" ")
-		self.main()
+		
+		# pre-load all the functions we call once on GSFont
+		font = Glyphs.font.copy()
+		self.origin_master = self.getOriginMaster(font)
+		self.kerning = self.getKerning(font)
+		self.variable_font_family = self.getVariableFontFamily(font)
+		self.has_variable_font_name =  self.hasVariableFamilyName(font)
+		self.variable_font_family = self.getVariableFontFamily(font)
+		self.special_layers = self.getSpecialLayers(font)
+		self.origin_master = self.getOriginMaster(font)
+		self.muted_glyphs = self.getMutedGlyphs(font)
+		self.special_layer_axes = self.getSpecialLayerAxes(font)
+		self.axis_map_to_build = self.getAxisMapToBuild(font)
+		self.origin_coords = self.getOriginCoords(font)
+
+		self.main(font)
 	
 	def buttonSelectBuildCallback(self, sender):
 		if sender.get() == 0:
@@ -280,7 +294,7 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 	def hasVariableFamilyName(self, font):
 		__doc__ = """Provided a font object, returns a boolean as to whether or not the font has a different VF name"""
 		for instance in font.instances:
-			if instance.type == 1:
+			if instance.variableStyleName:
 				return True
 
 
@@ -295,7 +309,7 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 	def getFamilyName(self, font, format):
 		__doc__ = """Provided a font object, returns a font family name"""
 		if format == "variable":
-			family_name = self.getVariableFontFamily(font)
+			family_name = self.variable_font_family
 		else:
 			family_name = font.familyName
 		return family_name
@@ -304,11 +318,11 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 	def getFamilyNameWithMaster(self, font, master, format):
 		__doc__ = """Provided a font object and a master, returns a font family name"""
 		master_name = master.name
-		if self.hasVariableFamilyName(font):
+		if self.has_variable_font_name:
 			if format == "static":
 				font_name = "%s - %s" % (font.familyName, master_name)
 			else:
-				font_name = "%s - %s" % (self.getVariableFontFamily(font), master_name)
+				font_name = "%s - %s" % (self.variable_font_family, master_name)
 		else:
 			font_name = "%s - %s" % (font.familyName, master_name)
 
@@ -326,7 +340,7 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 	def getNameWithAxis(self, font, axes, format):
 		__doc__ = """Provided a font and a dict of axes for a brace layer, returns a font family name"""
 		if not self.to_build["static"]:
-			font_name = "%s -" % self.getVariableFontFamily(font)
+			font_name = "%s -" % self.variable_font_family
 		else:
 			font_name = "%s -" % (font.familyName)
 		for i, axis in enumerate(axes):
@@ -336,8 +350,8 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 
 	def alignSpecialLayers(self, font):
 		__doc__ = """Applies the same master ID referencing the variable font origin to all brace layers"""
-		master_id = self.getOriginMaster(font)
-		special_layers = self.getSpecialLayers(font)
+		master_id = self.origin_master
+		special_layers = self.special_layers
 		# make them the same
 		for layer in special_layers:
 			layer.associatedMasterId = master_id
@@ -348,7 +362,7 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 		sources = []
 		for i, master in enumerate(font.masters):
 			s = SourceDescriptor()
-			if self.hasVariableFamilyName(font) and not self.to_build["static"]:
+			if self.has_variable_font_name and not self.to_build["static"]:
 				font_name = self.getFamilyNameWithMaster(font, master, "variable")
 			else:
 				font_name = self.getFamilyNameWithMaster(font, master, "static")
@@ -359,7 +373,7 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 			for x, axis in enumerate(master.axes):
 				locations[font.axes[x].name] = axis
 			s.designLocation = locations
-			s.mutedGlyphNames = self.getMutedGlyphs(font)
+			s.mutedGlyphNames = self.muted_glyphs
 			sources.append(s)
 		return sources
 
@@ -378,7 +392,7 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 	def getSpecialLayerAxes(self, font):
 		__doc__ = """Provided a font object, returns a list of dicts containing name and coordinate information for each axis"""
 		special_layer_axes = []
-		layers = self.getSpecialLayers(font)
+		layers = self.special_layers
 		for layer in layers:
 			layer_axes = dict()
 			for i, coords in enumerate(layer.attributes['coordinates']):
@@ -411,11 +425,11 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 	def getSpecialSources(self, font, format):
 		__doc__ = """Provided a font object, returns an array of designspaceLib SourceDescriptors """
 		sources = []
-		special_layer_axes = self.getSpecialLayerAxes(font)
+		special_layer_axes = self.special_layer_axes
 		for i, special_layer_axis in enumerate(special_layer_axes):
 			axes = list(special_layer_axis.values())
 			s = SourceDescriptor()
-			master = self.getMasterById(font,self.getOriginMaster(font))
+			master = self.getMasterById(font,self.origin_master)
 			if self.brace_layers_as_layers:
 				if self.hasVariableFamilyName(font) and not self.to_build["static"]:
 					font_name = self.getFamilyNameWithMaster(font, master, "variable")
@@ -494,7 +508,7 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 			if font.customParameters["Axis Mappings"]:
 				axis_map = font.customParameters["Axis Mappings"]
 			else:
-				axis_map = self.getAxisMapToBuild(font)
+				axis_map = self.axis_map_to_build
 			
 			user_location = dict()
 			for i,axis in enumerate(instance.axes):
@@ -514,53 +528,55 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 		doc.locationLabels = labels
 		return doc
 
-
-	def getAxisLabelList(self,font,axis_index,format):
-		__doc__ = "Provided a GSfont object, the index of a GSAxis, and the output format, returns a list of labels"
-		axis_tag = font.axes[axis_index].axisTag
-		if font.customParameters["Axis Mappings"]:
-			axis_map = font.customParameters["Axis Mappings"][axis_tag]
-		else:
-			axis_map = self.getAxisInstanceMap(font)
+	#
+	# Once Glyphs supports full STAT
+	#
+	# def getAxisLabelList(self,font,axis_index,format):
+	# 	__doc__ = "Provided a GSfont object, the index of a GSAxis, and the output format, returns a list of labels"
+	# 	axis_tag = font.axes[axis_index].axisTag
+	# 	if font.customParameters["Axis Mappings"]:
+	# 		axis_map = font.customParameters["Axis Mappings"][axis_tag]
+	# 	else:
+	# 		axis_map = self.getAxisInstanceMap(font)
 		
-		axis_range = axis_map[axis_tag]
-		axis_list = list(axis_range.items())
+	# 	axis_range = axis_map[axis_tag]
+	# 	axis_list = list(axis_range.items())
 
-		labels = []
-		label_user = []
+	# 	labels = []
+	# 	label_user = []
 		
-		instances = [instance for instance in font.instances if instance.active == True and instance.type == 0]
-		for instance in instances:
-			#
-			# tricky if there's an opsz... or many axes ... see forum link above about Glyphs not really supporting this
-			#
-			# potentially, like:
-			#
-			# if format == "variable" and instance.variableStyleName:
-			#	style_name = instance.variableStyleName
-			# else:
-			#	style_name = instance.name
-			# 
-			# but also subfamily, etc...
+	# 	instances = [instance for instance in font.instances if instance.active == True and instance.type == 0]
+	# 	for instance in instances:
+	# 		#
+	# 		# tricky if there's an opsz... or many axes ... see forum link above about Glyphs not really supporting this
+	# 		#
+	# 		# potentially, like:
+	# 		#
+	# 		# if format == "variable" and instance.variableStyleName:
+	# 		#	style_name = instance.variableStyleName
+	# 		# else:
+	# 		#	style_name = instance.name
+	# 		# 
+	# 		# but also subfamily, etc...
 
-			if axis_tag == "opsz" and instance.customParameters["Optical Size"]:
-				style_name = instance.customParameters["Optical Size"].split(";")[-1]
-			else:
-				style_name = instance.name
+	# 		if axis_tag == "opsz" and instance.customParameters["Optical Size"]:
+	# 			style_name = instance.customParameters["Optical Size"].split(";")[-1]
+	# 		else:
+	# 			style_name = instance.name
 
-			if instance.customParameters["Style Name as STAT entry"] and instance.customParameters["Style Name as STAT entry"] == axis_tag:
-				if instance.customParameters["Elidable STAT Axis Value Name"]:
-					elidable = True
-				else:
-					elidable = False
-				user_min = axis_list[0][1]
-				user_max = axis_list[-1][1]
-				user_val = axis_range[instance.axes[axis_index]]
-				label = AxisLabelDescriptor(name=style_name,userValue=user_val, userMinimum=user_min, userMaximum=user_max,elidable=elidable)
-				if user_val not in label_user:
-					label_user.append(user_val)
-					labels.append(label)
-		return labels
+	# 		if instance.customParameters["Style Name as STAT entry"] and instance.customParameters["Style Name as STAT entry"] == axis_tag:
+	# 			if instance.customParameters["Elidable STAT Axis Value Name"]:
+	# 				elidable = True
+	# 			else:
+	# 				elidable = False
+	# 			user_min = axis_list[0][1]
+	# 			user_max = axis_list[-1][1]
+	# 			user_val = axis_range[instance.axes[axis_index]]
+	# 			label = AxisLabelDescriptor(name=style_name,userValue=user_val, userMinimum=user_min, userMaximum=user_max,elidable=elidable)
+	# 			if user_val not in label_user:
+	# 				label_user.append(user_val)
+	# 				labels.append(label)
+	# 	return labels
 
 		
 	def addAxes(self, doc, font, format):
@@ -569,7 +585,7 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 			if font.customParameters["Axis Mappings"]:
 				axis_map = font.customParameters["Axis Mappings"][axis.axisTag]
 			else:
-				axis_map = self.getAxisMapToBuild(font)
+				axis_map = self.axis_map_to_build
 				if axis_map is not None:
 					axis_map = axis_map[axis.axisTag]
 			if axis_map:
@@ -585,7 +601,7 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 				except:
 					self.w.status.set("\n\nError: the font's axis mappings don't match its real min/max coords\n\n" + self.w.status.get())
 					print(" ")
-				origin_coord = self.getOriginCoords(font)[i]
+				origin_coord = self.origin_coords[i]
 				user_origin = axis_map[origin_coord]
 				# todo for locationlabels
 				#a.axisOrdering = i
@@ -692,7 +708,7 @@ condition_list, replacement_list = getConditionsFromOT(font)
 			else:
 				style_map_style = "regular"
 			if format == "variable":
-				family_name = self.getVariableFontFamily(font)
+				family_name = self.variable_font_family
 			else:
 				if instance.preferredFamily:
 					family_name = instance.preferredFamily
@@ -713,7 +729,7 @@ condition_list, replacement_list = getConditionsFromOT(font)
 				design_location[font.axes[i].name] = axis_value
 			ins.designLocation = design_location
 			
-			axis_map = self.getAxisMapToBuild(font)
+			axis_map = self.axis_map_to_build
 			user_location = {}
 			for i, axis_value in enumerate(instance.axes):
 				user_location[font.axes[i].name] = axis_map[font.axes[i].axisTag][axis_value]
@@ -759,7 +775,7 @@ condition_list, replacement_list = getConditionsFromOT(font)
 		__doc__ = """Provided a font object and export destination, exports all brace layers as individual UFO masters"""
 
 		# todo - do this as a generic RFont and not using ins.interpolatedFont
-		special_layer_axes = self.getSpecialLayerAxes(font)
+		special_layer_axes = self.special_layer_axes
 		for i, special_layer_axis in enumerate(special_layer_axes):
 			axes = list(special_layer_axis.values())
 			font.instances.append(GSInstance())
@@ -1080,47 +1096,53 @@ condition_list, replacement_list = getConditionsFromOT(font)
 					ufo[glyph.name].export = glyph.export
 		return ufo
 
-	def getKerning(self,font,type):
-		__doc__ = """Given a GSFont and a type of kerning ("ufo" or "feature"), provides that kerning type"""
+	def getKerning(self,font):
+		__doc__ = """Given a GSFont, returns a dict with two types of kerning: a string for features, and a list for UFO kerning."""
+		kerning = { "feature": {}, "ufo": {}}
+		
 		glyph_ids = dict()
-		kerning_str = ""
-		ufo_kerning = []
+		
+		feature_kerning = dict()
+		ufo_kerning = dict()
 		for glyph in font.glyphs:
 			glyph_ids[glyph.id] = glyph.name
 		for master_id, value in font.kerning.items():
+			kerning_str = ""
 			for left_group, value in font.kerning[master_id].items():
 				if left_group[0:4] == "@MMK":
-					left_group = "public.kern1." + left_group[7:]
+					left_ufo_group = "public.kern1." + left_group[7:]
 				else:
-					left_group = glyph_ids[left_group]
+					left_ufo_group = glyph_ids[left_group]
 				for right_group, value in value.items():
 					if right_group[0:4] == "@MMK":
-						right_group = "public.kern2." + right_group[7:]
+						right_ufo_group = "public.kern2." + right_group[7:]
 					else:
-						right_group = glyph_ids[right_group]
-					ufo_kerning.append([left_group,right_group,int(value)])
-					kerning_str = kerning_str + f"""        pos {left_group} {right_group} {value};\n"""
+						right_ufo_group = glyph_ids[right_group]
+					try:
+						ufo_kerning[master_id].append([left_ufo_group,right_ufo_group,int(value)])
+					except:
+						ufo_kerning[master_id] = []
+						ufo_kerning[master_id].append([left_ufo_group,right_ufo_group,int(value)])			
 					continue
-		kerning_str.strip()
-		use_extension = " useExtension" if font.customParameters["Use Extension Kerning"] else None
-		feature_kerning = f"""feature kern {{
+				kerning_str += f"""        pos {left_group} {right_group} {value};\n"""	
+			kerning_str.strip()
+
+			use_extension = " useExtension" if font.customParameters["Use Extension Kerning"] else None
+			feature_kerning_str = f"""feature kern {{
     lookup kern_DFLT{use_extension if use_extension else ""} {{
 {kerning_str}    }}
 }}
 """
+			feature_kerning[master_id] = feature_kerning_str
+			kerning["ufo"][master_id] = ufo_kerning[master_id]
+			kerning["feature"][master_id] = feature_kerning[master_id]
 
-		if type == "ufo":
-			return ufo_kerning
-		elif type == "feature":
-			return feature_kerning
-		else:
-			return None
+		return kerning
 
 
-	def addUfoKerning(self, font, ufo):
-		__doc__ = """Provided a GSFont object and a fontParts UFO, build kerning into the ufo and return it"""
-		ufo_kerning = self.getKerning(font,type="ufo")
-		for l,r,v in ufo_kerning:
+	def addUfoKerning(self, ufo,ufo_kerning,master_id):
+		__doc__ = """Given a dict of kerningO, build kerning into the ufo and return it"""
+		for l,r,v in ufo_kerning[master_id]:
 			ufo.kerning[(l,r)] = v
 		return ufo
 
@@ -1137,22 +1159,15 @@ include(../features/classes.fea);
 			if not feature.startswith("size_"):
 				feature_str = feature_str + f"""include(../features/{feature}.fea);{nl}"""
 			ufo.features.text = feature_str
-		
-		# we'll add this feature after saving the ufo
-		if master.id in font.kerning:
-			ufo.features.text += "include(kern.fea);\n"
-
-
+		# todo - feature kerning currently broken, need lookups etc, and right order
+		# try:
+		# 	ufo.features.text += self.kerning["feature"][master.id]
+		# except:
+		# 	pass
 		return ufo
 
-	def addFeatureToMaster(self,feature,feature_path):
-		f = open(feature_path, "w")
-		f.write(feature)
-		f.close()
-
-
 	def addGlyphLayersToUfo(self, font, ufo):
-		brace_layers = self.getSpecialLayers(font)
+		brace_layers = self.special_layers
 		for layer in brace_layers:
 			axes = list(dict.fromkeys(layer.attributes['coordinates'].values()))
 			axes = [str(a) for a in axes]
@@ -1170,7 +1185,7 @@ include(../features/classes.fea);
 
 
 	def addLayersToUfo(self, font, ufo):
-		special_layer_axes = self.getSpecialLayerAxes(font)
+		special_layer_axes = self.special_layer_axes
 		for i, special_layer_axis in enumerate(special_layer_axes):
 			axes = list(special_layer_axis.values())
 			axes = [str(a) for a in axes]
@@ -1186,7 +1201,7 @@ include(../features/classes.fea);
 
 
 	def addLayerMastersToUFO(self, font, ufo): 
-		brace_layers = self.getSpecialLayers(font)
+		brace_layers = self.special_layers
 		for layer in brace_layers:
 			axes = list(dict.fromkeys(layer.attributes['coordinates'].values()))
 			axes = [str(a) for a in axes]
@@ -1215,7 +1230,8 @@ include(../features/classes.fea);
 	def addGlyphOrder(self,font,ufo):
 		ufo.glyphOrder = list(g.name for g in font.glyphs)
 		return ufo
-	
+
+
 	def exportUFOMasters(self, font, dest, format):
 		__doc__ = """Provided a font object and a destination, exports a UFO for each master in the UFO, not including special layers (for that use generateMastersAtBraces)"""
 		for master in font.masters:
@@ -1224,18 +1240,16 @@ include(../features/classes.fea);
 			ufo_file_path = os.path.join(dest, ufo_file_name)
 			ufo = self.buildUfoFromMaster(master, font.glyphs)
 			ufo = self.addGroups(font, ufo)
-			ufo = self.addUfoKerning(font, ufo)
+			ufo = self.addUfoKerning(ufo, self.kerning["ufo"],master.id)
 			ufo = self.addFeatureIncludes(ufo, master)
 			ufo = self.addPostscriptNames(font, ufo)
 			ufo = self.addGlyphOrder(font, ufo)
 			ufo = self.addSkipExport(font, ufo)
 			if self.brace_layers_as_layers:
 				ufo = self.addLayersToUfo(font,ufo)
-				if master.id == self.getOriginMaster(font):
+				if master.id == self.origin_master:
 					ufo = self.addGlyphLayersToUfo(font,ufo)
 			ufo.save(ufo_file_path)
-			self.addFeatureToMaster(self.getKerning(font,type="feature"), os.path.join(ufo_file_path,"kern.fea"))
-
 
 	def getFeatureDict(self, font):
 		__doc__ = """Provided a GSFont object, build an ordered dictionary of feature names and feature code based on those GSFeatures."""
@@ -1357,9 +1371,8 @@ include(../features/classes.fea);
 				if layer.isMasterLayer or layer.isSpecialLayer:
 					layer.decomposeCorners()
 					
-	def main(self):
+	def main(self,font):
 		# use a copy to prevent modifying the open Glyphs file
-		font = Glyphs.font.copy()
 		# put all special layers on the same masterID
 		self.alignSpecialLayers(font)
 		# update any automatically generated features that need it
@@ -1392,14 +1405,14 @@ include(../features/classes.fea);
 			self.removeSubsFromOT(font)
 
 			# generate a designspace file based on metadata in the copy of the open font
-			if self.to_build["static"] or (self.to_build["variable"] and not self.hasVariableFamilyName(font)):
+			if self.to_build["static"] or self.to_build["variable"] and not self.has_variable_font_name:
 				self.w.status.set(("Building designspace from font metadata...") + "\n" + self.w.status.get())
 				print(" ")
 				static_designspace_doc = self.getDesignSpaceDocument(font, "static")
 				static_designspace_path = "%s/%s.designspace" % (
 					temp_project_folder, self.getFamilyName(font, "static").replace(" ",""))
 				static_designspace_doc.write(static_designspace_path)
-			if self.to_build["variable"] and self.hasVariableFamilyName(font):
+			if self.to_build["variable"] and self.has_variable_font_name:
 				self.w.status.set(("Building variable designspace from font metadata...") + "\n" + self.w.status.get())
 				print(" ")
 				variable_designspace_doc = self.getDesignSpaceDocument(font, "variable")

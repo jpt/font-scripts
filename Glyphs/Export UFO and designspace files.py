@@ -57,7 +57,11 @@ from fontParts.fontshell.guideline import RGuideline
 
 
 class ExportUFOAndDesignspace(object):
+
 	def __init__(self):
+		
+		#vanilla UI
+
 		margin_x = 20
 		margin_y = 16
 		spacer = 6
@@ -117,8 +121,10 @@ class ExportUFOAndDesignspace(object):
 			"static": True,
 		}
 
+
+
 		self.to_add_build_script = True  # adds a minimal build script to the output dir
-		self.brace_layers_as_layers = True
+		self.brace_layers_as_layers = True # these are not in sync with default button values above, make sure to change both
 
 		# todo, keep track of these in a preference
 		self.to_decompose = []  # if you want, make an array of glyphnames (not unicodes)
@@ -129,6 +135,8 @@ class ExportUFOAndDesignspace(object):
 		self.decompose_smart  = False
         
 		self.w.open()
+
+	# callback functions for vanilla
 
 	def exportButton(self, sender):
 		self.to_decompose = self.w.decomposeField.get().split(" ")
@@ -173,6 +181,7 @@ class ExportUFOAndDesignspace(object):
 		else:
 			self.production_names = False
 
+	# begin glyphs->UFO/designspace lib
 	def addBuildScript(self, font, dest):
 		__doc__ = """Provided a font, destination and font name, creates a build script for the project"""
 		if not self.to_add_build_script:
@@ -523,7 +532,7 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 		instances = [instance for instance in font.instances if instance.active == True and instance.type == 0]
 		for instance in instances:
 			#
-			# tricky if there's an opsz... 
+			# tricky if there's an opsz... or many axes ... see forum link above about Glyphs not really supporting this
 			#
 			# potentially, like:
 			#
@@ -749,6 +758,7 @@ condition_list, replacement_list = getConditionsFromOT(font)
 	def generateMastersAtBraces(self, font, temp_project_folder, format):
 		__doc__ = """Provided a font object and export destination, exports all brace layers as individual UFO masters"""
 
+		# todo - do this as a generic RFont and not using ins.interpolatedFont
 		special_layer_axes = self.getSpecialLayerAxes(font)
 		for i, special_layer_axis in enumerate(special_layer_axes):
 			axes = list(special_layer_axis.values())
@@ -825,6 +835,7 @@ condition_list, replacement_list = getConditionsFromOT(font)
 		return ufo
 
 	def formatValue(self,value,type):
+		# this function saves some lines of code when setting the ufo.info attributes
 		if not value:
 			return None
 		if type == "int":
@@ -984,6 +995,7 @@ condition_list, replacement_list = getConditionsFromOT(font)
 		return ufo
 
 	def getGlyphFromGSLayer(self,ufo,layer):
+		__doc__ = """Provided a GSLayer and an RFfont, creates an RGlyph like the layer and returns it"""
 		glyph = RGlyph()
 		glyph.width = layer.width
 		glyph.leftMargin = layer.LSB
@@ -1069,6 +1081,7 @@ condition_list, replacement_list = getConditionsFromOT(font)
 		return ufo
 
 	def getKerning(self,font,type):
+		__doc__ = """Given a GSFont and a type of kerning ("ufo" or "feature"), provides that kerning type"""
 		glyph_ids = dict()
 		kerning_str = ""
 		ufo_kerning = []
@@ -1103,14 +1116,9 @@ condition_list, replacement_list = getConditionsFromOT(font)
 		else:
 			return None
 
-	# todo
-	# def getGDEF(self,font):
-	# 	# gets some shit
-	# 	return None
-
 
 	def addUfoKerning(self, font, ufo):
-		__doc__ = """Provided a GSFont object and a fontParts UFO, build kerning into the ufo and return it along with a kerning feature."""
+		__doc__ = """Provided a GSFont object and a fontParts UFO, build kerning into the ufo and return it"""
 		ufo_kerning = self.getKerning(font,type="ufo")
 		for l,r,v in ufo_kerning:
 			ufo.kerning[(l,r)] = v

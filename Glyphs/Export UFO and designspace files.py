@@ -29,6 +29,7 @@ from fontParts.fontshell.anchor import RAnchor
 from fontParts.fontshell.guideline import RGuideline
 
 # Todo:
+# - finish implementing kern feature (right now only using kerning.plist )
 # - Font-level Guidelines
 # - GDEF, mark, mkmk features 
 # - make combining marks 0 width?
@@ -1159,11 +1160,14 @@ include(../features/classes.fea);
 			if not feature.startswith("size_"):
 				feature_str = feature_str + f"""include(../features/{feature}.fea);{nl}"""
 			ufo.features.text = feature_str
-		# todo - feature kerning currently broken, need lookups etc, and right order
+
+		# todo - feature kerning currently broken, need lookups etc, and right order -- uncomment when done
+
 		# try:
 		# 	ufo.features.text += self.kerning["feature"][master.id]
 		# except:
 		# 	pass
+
 		return ufo
 
 	def addGlyphLayersToUfo(self, font, ufo):

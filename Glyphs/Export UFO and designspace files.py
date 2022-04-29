@@ -30,8 +30,8 @@ from fontParts.fontshell.guideline import RGuideline
 
 # Todo:
 # - Font-level Guidelines
-# - GDEF, mark, mkmk, kern features 
-# - make combining marks 0 width
+# - GDEF, mark, mkmk features 
+# - make combining marks 0 width?
 # - Hinting: public.verticalOrigin? public.truetype.roundOffsetToGrid? public.truetype.useMyMetrics?
 # - Metainfo.plist: creator, formatVersion, formatVersionMinor
 # - One designspace for VF? Have to look into designspace 5 spec more closely
@@ -1068,10 +1068,10 @@ condition_list, replacement_list = getConditionsFromOT(font)
 					ufo[glyph.name].export = glyph.export
 		return ufo
 
-
-	def addKerning(self, font, ufo):
-		__doc__ = """Provided a GSFont object and a fontParts UFO, build kerning into the font. Currently only tested for LTR."""
+	def getKerning(self,font,type):
 		glyph_ids = dict()
+		kerning_str = ""
+		ufo_kerning = []
 		for glyph in font.glyphs:
 			glyph_ids[glyph.id] = glyph.name
 		for master_id, value in font.kerning.items():
@@ -1085,23 +1085,62 @@ condition_list, replacement_list = getConditionsFromOT(font)
 						right_group = "public.kern2." + right_group[7:]
 					else:
 						right_group = glyph_ids[right_group]
-					ufo.kerning[(left_group, right_group)] = int(value)
+					ufo_kerning.append([left_group,right_group,int(value)])
+					kerning_str = kerning_str + f"""        pos {left_group} {right_group} {value};\n"""
 					continue
+		kerning_str.strip()
+		use_extension = " useExtension" if font.customParameters["Use Extension Kerning"] else None
+		feature_kerning = f"""feature kern {{
+    lookup kern_DFLT{use_extension if use_extension else ""} {{
+{kerning_str}    }}
+}}
+"""
+
+		if type == "ufo":
+			return ufo_kerning
+		elif type == "feature":
+			return feature_kerning
+		else:
+			return None
+
+	# todo
+	# def getGDEF(self,font):
+	# 	# gets some shit
+	# 	return None
+
+
+	def addUfoKerning(self, font, ufo):
+		__doc__ = """Provided a GSFont object and a fontParts UFO, build kerning into the ufo and return it along with a kerning feature."""
+		ufo_kerning = self.getKerning(font,type="ufo")
+		for l,r,v in ufo_kerning:
+			ufo.kerning[(l,r)] = v
 		return ufo
 
 
-	def addFeatureInclude(self, ufo, font):
-		__doc__ = """Provided a fontParts UFO master, add feature includes for classes and individual features."""
-		features = self.getFeatureDict(font)
+	def addFeatureIncludes(self, ufo, master):
+		__doc__ = """Provided a fontParts UFO master, add feature includes for classes and individual features, and write features specific to the master."""
+		features = self.getFeatureDict(master.font)
 		feature_str = """include(../features/prefixes.fea);
 include(../features/classes.fea);
 """
+		font = master.font
 		nl = "\n"
 		for feature in features.keys():
 			if not feature.startswith("size_"):
 				feature_str = feature_str + f"""include(../features/{feature}.fea);{nl}"""
 			ufo.features.text = feature_str
+		
+		# we'll add this feature after saving the ufo
+		if master.id in font.kerning:
+			ufo.features.text += "include(kern.fea);\n"
+
+
 		return ufo
+
+	def addFeatureToMaster(self,feature,feature_path):
+		f = open(feature_path, "w")
+		f.write(feature)
+		f.close()
 
 
 	def addGlyphLayersToUfo(self, font, ufo):
@@ -1177,8 +1216,8 @@ include(../features/classes.fea);
 			ufo_file_path = os.path.join(dest, ufo_file_name)
 			ufo = self.buildUfoFromMaster(master, font.glyphs)
 			ufo = self.addGroups(font, ufo)
-			ufo = self.addKerning(font, ufo)
-			ufo = self.addFeatureInclude(ufo, font)
+			ufo = self.addUfoKerning(font, ufo)
+			ufo = self.addFeatureIncludes(ufo, master)
 			ufo = self.addPostscriptNames(font, ufo)
 			ufo = self.addGlyphOrder(font, ufo)
 			ufo = self.addSkipExport(font, ufo)
@@ -1187,12 +1226,14 @@ include(../features/classes.fea);
 				if master.id == self.getOriginMaster(font):
 					ufo = self.addGlyphLayersToUfo(font,ufo)
 			ufo.save(ufo_file_path)
+			self.addFeatureToMaster(self.getKerning(font,type="feature"), os.path.join(ufo_file_path,"kern.fea"))
 
 
 	def getFeatureDict(self, font):
 		__doc__ = """Provided a GSFont object, build an ordered dictionary of feature names and feature code based on those GSFeatures."""
 		nl = "\n"
 		features = OrderedDict()
+
 		for feature in font.features:
 			feature_code = ""
 			for line in feature.code.splitlines():
@@ -1241,7 +1282,7 @@ include(../features/classes.fea);
 				size_str = size_str + "} size;"
 				key = "size_" + str(s)
 				features[key] = size_str
-			
+
 		return features
 
 

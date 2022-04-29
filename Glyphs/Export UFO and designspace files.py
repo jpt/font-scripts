@@ -29,7 +29,7 @@ from fontParts.fontshell.anchor import RAnchor
 from fontParts.fontshell.guideline import RGuideline
 
 # Todo:
-# - finish implementing kern feature (right now only using kerning.plist )
+# - finish implementing kern feature - it is mostly there (kerning.plist is complete)
 # - Font-level Guidelines
 # - GDEF, mark, mkmk features 
 # - make combining marks 0 width?
@@ -669,14 +669,19 @@ condition_list, replacement_list = getConditionsFromOT(font)
 	def removeSubsFromOT(self, font):
 		__doc__ = """Provided a font object, removes subsitutions in feature code"""
 		feature_index = None
+		# find which if any feature has the conditional substitutions
 		for i, feature_itr in enumerate(font.features):
 			for line in feature_itr.code.splitlines():
 				if line.startswith("condition "):
 					feature_index = i
 					break
-		if(feature_index):
+		if feature_index:
 			font.features[feature_index].code = re.sub(
 				r'#ifdef VARIABLE.*?#endif', '', font.features[feature_index].code, flags=re.DOTALL)
+			# delete the feature if it's empty after removing the subs
+			if not font.features[feature_index].code.strip():
+				del(font.features[feature_index])
+			
 
 
 	def applyConditionsToRules(self, doc, condition_list, replacement_list):
@@ -1012,7 +1017,7 @@ condition_list, replacement_list = getConditionsFromOT(font)
 		return ufo
 
 	def getGlyphFromGSLayer(self,ufo,layer):
-		__doc__ = """Provided a GSLayer and an RFfont, creates an RGlyph like the layer and returns it"""
+		__doc__ = """Provided a GSLayer and an RFfont, creates an RGlyph like the layer and returns it, while adding glyph-level guides to the RFont"""
 		glyph = RGlyph()
 		glyph.width = layer.width
 		glyph.leftMargin = layer.LSB
@@ -1061,6 +1066,7 @@ condition_list, replacement_list = getConditionsFromOT(font)
 				ufo[glyph.name].appendGuideline(guideline=guideline)
 		return glyph
 	
+
 	def buildUfoFromMaster(self, master, glyphs):
 		__doc__ = """Provided a GSMFontMaster and a list of glyph names to be used in that master, return a fontParts UFO"""
 		font = master.font
@@ -1069,23 +1075,17 @@ condition_list, replacement_list = getConditionsFromOT(font)
 		self.w.status.set(("Building master: %s - %s" % (master.font.familyName, master.name)) + "\n" + self.w.status.get())
 		print(" ")
 
-		if not glyphs:
-			glyphs = font.glyphs
-
+		glyphs = font.glyphs
 		# Create UFO
 		ufo = NewFont(familyName=font.familyName, styleName=master.name)
-		
-
 		# Add fontinfo.plist
 		ufo = self.addFontInfoToUfo(master,ufo)
-		
 		# add empty glyphs
 		for glyph in glyphs:
 			ufo.newGlyph(glyph.name)
 			if glyph.unicodes is not None:
 				ufo[glyph.name].unicodes = glyph.unicodes
 			ufo[glyph.name].export = glyph.export
-
 		# add glyph contents
 		for glyph in glyphs:
 			for layer in glyph.layers:
@@ -1098,7 +1098,7 @@ condition_list, replacement_list = getConditionsFromOT(font)
 		return ufo
 
 	def getKerning(self,font):
-		__doc__ = """Given a GSFont, returns a dict with two types of kerning: a string for features, and a list for UFO kerning."""
+		__doc__ = """Given a GSFont, returns a dict with two types of kerning: a string for features, and a list [left glyph, right glyph, value] for UFO kerning."""
 		kerning = { "feature": {}, "ufo": {}}
 		
 		glyph_ids = dict()
@@ -1242,7 +1242,7 @@ include(../features/classes.fea);
 			font_name = self.getFamilyNameWithMaster(font, master, format)
 			ufo_file_name = "%s.ufo" % font_name
 			ufo_file_path = os.path.join(dest, ufo_file_name)
-			ufo = self.buildUfoFromMaster(master, font.glyphs)
+			ufo = self.buildUfoFromMaster(master)
 			ufo = self.addGroups(font, ufo)
 			ufo = self.addUfoKerning(ufo, self.kerning["ufo"],master.id)
 			ufo = self.addFeatureIncludes(ufo, master)

@@ -1182,7 +1182,7 @@ condition_list, replacement_list = getConditionsFromOT(font)
 		return kerning
 
 
-	def addUfoKerning(self, ufo,master_id):
+	def addUfoKerning(self, ufo: RFont, master_id: str) -> RFont:
 		__doc__ = """Given a dict of kerningO, build kerning into the ufo and return it"""
 		try:
 			for l,r,v in self.kerning["ufo"][master_id]:
@@ -1192,7 +1192,7 @@ condition_list, replacement_list = getConditionsFromOT(font)
 		return ufo
 
 
-	def addFeatureIncludes(self, ufo, master):
+	def addFeatureIncludes(self, ufo: RFont, master: GSFontMaster) -> RFont:
 		__doc__ = """Provided a fontParts UFO master, add feature includes for classes and individual features, and write features specific to the master."""
 		features = self.getFeatureDict(master.font)
 		feature_str = """include(../features/prefixes.fea);

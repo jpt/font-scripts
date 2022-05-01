@@ -47,9 +47,11 @@ from fontParts.fontshell.font import RFont
 # 	glyphs_to_zero = set([layer.parent.name for glyph in non_spacing_marks for layer in glyph.layers if layer.isSpecialLayer or layer.isMasterLayer])
 # 	for glyph_name in glyphs_to_zero:
 # 		# etc
-
+#
+# General todo:
+#
+# - Add color to glyphs, maybe other things?
 # - finish implementing kern feature - it is mostly there (kerning.plist is complete)
-
 # - add woff2_compress to build script
 # - Hinting: public.verticalOrigin? public.truetype.roundOffsetToGrid? public.truetype.useMyMetrics? I forget which can be set in custom params. 
 # - One designspace for VF? Have to look into designspace 5 spec more closely.

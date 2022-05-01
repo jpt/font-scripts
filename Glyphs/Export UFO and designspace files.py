@@ -3,7 +3,6 @@ __doc__ = """
 Exports UFO and designspace files. Supports substitutions defined in OT features, but not yet bracket layers. Brace layers supported, but not yet as "support layers" for Skateboard. Thanks to Rafał Buchner, Joancarles Casasín (https://robofont.com/documentation/how-tos/converting-from-glyphs-to-ufo/), and to the authors and maintainers of designspaceLib and fontParts.
 """
 
-from typing import List
 from GlyphsApp import GSInstance, GSFont, GSFontMaster, GSLayer
 import re
 import os

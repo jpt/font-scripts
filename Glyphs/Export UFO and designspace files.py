@@ -423,7 +423,7 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 		return special_layer_axes
 
 
-	def getSpecialGlyphNames(self, font: GSFont, axes) -> list[str]:
+	def getSpecialGlyphNames(self, font: GSFont, axes: list[int]) -> list[str]:
 		__doc__ = """Provided a font and a list of axis coordinates, returns all glyphs inside those coordinates"""
 		glyph_names = []
 		for glyph in font.glyphs:

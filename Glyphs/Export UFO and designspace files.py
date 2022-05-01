@@ -28,17 +28,31 @@ from fontParts.fontshell.component import RComponent
 from fontParts.fontshell.anchor import RAnchor
 from fontParts.fontshell.guideline import RGuideline
 
+# Known problems:
+# - Image not implemented in fontParts
+# - Glyphs doesn't support explicit STAT axis label names
+#
 # Todo:
+#
+# Remaining functions to build:
+# 
+# def addGDEF(self,font,ufo):
+# def addMarkFeatures(self,font,ufo):
+#	# both mark and mkmk
+# def addFontGuideline(self,font,ufo):
+# def zeroNonSpacingMarks(self,font,ufo):
+# 	non_spacing_marks = [glyph for glyph in font.glyphs if glyph.category == "Mark" and glyph.subCategory == "Nonspacing"]
+# 	glyphs_to_zero = set([layer.parent.name for glyph in non_spacing_marks for layer in glyph.layers if layer.isSpecialLayer or layer.isMasterLayer])
+# 	for glyph_name in glyphs_to_zero:
+# 		# etc
+
 # - finish implementing kern feature - it is mostly there (kerning.plist is complete)
-# - Font-level Guidelines
-# - GDEF, mark, mkmk features 
-# - make combining marks 0 width?
+
 # - add woff2_compress to build script
-# - Hinting: public.verticalOrigin? public.truetype.roundOffsetToGrid? public.truetype.useMyMetrics?
-# - One designspace for VF? Have to look into designspace 5 spec more closely
-# - Finish the metadata in addFontInfoToUfo
+# - Hinting: public.verticalOrigin? public.truetype.roundOffsetToGrid? public.truetype.useMyMetrics? I forget which can be set in custom params. 
+# - One designspace for VF? Have to look into designspace 5 spec more closely.
+# - Finish the metadata in addFontInfoToUfo — mostly there.
 # - Add support for bracket layers (in addition to OT based subs, which are already supported)
-# - Images in glyphs
 # - More elaborate build script possibilities (add size table that we're outputting but not importing in masters, for example; other tables too; add remove overlaps etc to build scripts)
 # - public.openTypeMeta
 # - public.openTypeCategories
@@ -275,6 +289,7 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 
 	def getOriginCoords(self, font):
 		__doc__ = """Provided a font object, returns an array of axis coordinates specified on the variable font origin master."""
+		master_id = None
 		for parameter in font.customParameters:
 			if parameter.name == "Variable Font Origin":
 				master_id = parameter.value
@@ -530,7 +545,7 @@ min, max = getBoundsByTag(Glyphs.font,"wght")"""
 		return doc
 
 	#
-	# Once Glyphs supports full STAT
+	# Once Glyphs supports full STAT....
 	#
 	# def getAxisLabelList(self,font,axis_index,format):
 	# 	__doc__ = "Provided a GSfont object, the index of a GSAxis, and the output format, returns a list of labels"
@@ -952,7 +967,11 @@ condition_list, replacement_list = getConditionsFromOT(font)
 		ufo.info.openTypeOS2WinAscent = self.formatValue(master.customParameters["winAscent"],"int")
 		ufo.info.openTypeOS2WinDescent = self.formatValue(master.customParameters["winDescent"],"int")
 
-		ufo.info.openTypeOS2Type = [int(font.customParameters["fsType"]["value"])] if font.customParameters["fsType"] and font.customParameters["fsType"]["value"] else [0]
+		try:
+			ufo.info.openTypeOS2Type = [int(font.customParameters["fsType"]["value"])]
+		except:
+			ufo.info.openTypeOS2Type = [0]
+
 		ufo.info.openTypeOS2SubscriptXSize = self.formatValue(master.customParameters["subscriptXSize"],"int")
 		ufo.info.openTypeOS2SubscriptYSize = self.formatValue(master.customParameters["subscriptYSize"],"int")
 		ufo.info.openTypeOS2SubscriptXOffset = self.formatValue(master.customParameters["subscriptXOffset"],"int")
@@ -967,7 +986,7 @@ condition_list, replacement_list = getConditionsFromOT(font)
 
 		# vhea table
 
-	    # tcheck font.customParams["Use Typo Metrics"] / convert upm
+	    # check font.customParams["Use Typo Metrics"] / convert upm
 
 		#ufo.info.openTypeVheaVertTypoAscender = 
 		#ufo.info.openTypeVheaVertTypoDescender = 
@@ -1010,7 +1029,7 @@ condition_list, replacement_list = getConditionsFromOT(font)
 		#ufo.info.macintoshFONDName = 
 
 		# todo font level custom params:
-		# Extension kerning - GPOS
+		# anything rleated to GPOS?
 		# TTFZones / TTFBlueFuzz ??
 
 
@@ -1022,6 +1041,7 @@ condition_list, replacement_list = getConditionsFromOT(font)
 		glyph.width = layer.width
 		glyph.leftMargin = layer.LSB
 		glyph.rightMargin = layer.RSB
+		glyph.name = layer.parent.name
 		if layer.anchors:
 			for anchor in layer.anchors:
 				ufo_anchor = RAnchor()
@@ -1064,10 +1084,23 @@ condition_list, replacement_list = getConditionsFromOT(font)
 				guideline.angle = guide.angle
 				guideline.name = guide.name
 				ufo[glyph.name].appendGuideline(guideline=guideline)
+
+		# Image - I don't think this is actually implemented in fontparts yet?
+		# if layer.backgroundImage:
+		# 	bg_img = layer.backgroundImage
+		# 	path = bg_img.path
+		# 	position = (int(bg_img.position.x), int(bg_img.position.y))
+		# 	scale = (int(bg_img.scale.x), int(bg_img.scale.y))
+		# 	transformation = bg_img.transform
+		# 	rotation = bg_img.rotation
+		# 	ufo_img = glyph.addImage(path=path,position=position,scale=scale)
+		# 	ufo_img.rotateBy(rotation)
+		# 	ufo_img.transformation = transformation
+
 		return glyph
 	
 
-	def buildUfoFromMaster(self, master, glyphs):
+	def buildUfoFromMaster(self, master):
 		__doc__ = """Provided a GSMFontMaster and a list of glyph names to be used in that master, return a fontParts UFO"""
 		font = master.font
 		master_index = self.getIndexByMaster(master)
@@ -1100,6 +1133,9 @@ condition_list, replacement_list = getConditionsFromOT(font)
 	def getKerning(self,font):
 		__doc__ = """Given a GSFont, returns a dict with two types of kerning: a string for features, and a list [left glyph, right glyph, value] for UFO kerning."""
 		kerning = { "feature": {}, "ufo": {}}
+		
+		if not font.kerning.items():
+			return kerning
 		
 		glyph_ids = dict()
 		
@@ -1134,17 +1170,23 @@ condition_list, replacement_list = getConditionsFromOT(font)
 {kerning_str}    }}
 }}
 """
-			feature_kerning[master_id] = feature_kerning_str
-			kerning["ufo"][master_id] = ufo_kerning[master_id]
-			kerning["feature"][master_id] = feature_kerning[master_id]
+			try:
+				feature_kerning[master_id] = feature_kerning_str
+				kerning["ufo"][master_id] = ufo_kerning[master_id]
+				kerning["feature"][master_id] = feature_kerning[master_id]
+			except:
+				pass
 
 		return kerning
 
 
-	def addUfoKerning(self, ufo,ufo_kerning,master_id):
+	def addUfoKerning(self, ufo,master_id):
 		__doc__ = """Given a dict of kerningO, build kerning into the ufo and return it"""
-		for l,r,v in ufo_kerning[master_id]:
-			ufo.kerning[(l,r)] = v
+		try:
+			for l,r,v in self.kerning["ufo"][master_id]:
+				ufo.kerning[(l,r)] = v
+		except:
+			pass
 		return ufo
 
 
@@ -1244,11 +1286,12 @@ include(../features/classes.fea);
 			ufo_file_path = os.path.join(dest, ufo_file_name)
 			ufo = self.buildUfoFromMaster(master)
 			ufo = self.addGroups(font, ufo)
-			ufo = self.addUfoKerning(ufo, self.kerning["ufo"],master.id)
+			ufo = self.addUfoKerning(ufo, master.id)
 			ufo = self.addFeatureIncludes(ufo, master)
 			ufo = self.addPostscriptNames(font, ufo)
 			ufo = self.addGlyphOrder(font, ufo)
 			ufo = self.addSkipExport(font, ufo)
+			#ufo = self.zeroNonSpacingMarks(font,ufo)
 			if self.brace_layers_as_layers:
 				ufo = self.addLayersToUfo(font,ufo)
 				if master.id == self.origin_master:

@@ -1,4 +1,4 @@
-#MenuTitle: Find layers with open paths
+#MenuTitle: New tab with open path layers
 # -*- coding: utf-8 -*-
 
 __doc__="""

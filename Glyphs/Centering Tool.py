@@ -16,8 +16,8 @@ class CenteringToolUI:
         bottom_padding = 16
         button_height = 20
         button_spacing = 8
-        button_titles = ["Horizontally center", "Vertically center in x-height", "Vertically center in ascender height", "Vertically center in capheight"]
-        actions = [self.centerHorizontally, self.centerXHeight, self.centerAscenderHeight, self.centerCapHeight]
+        button_titles = ["Horizontally center", "Vertically center in x-height", "Vertically center in capheight", "Vertically center in ascender height"]
+        actions = [self.centerHorizontally, self.centerXHeight, self.centerCapHeight, self.centerAscenderHeight]
 
         # Calculate the total window height
         total_height = top_padding + bottom_padding + button_height * len(button_titles) + button_spacing * (len(button_titles) - 1)

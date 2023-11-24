@@ -6,66 +6,42 @@ Vertically centers selected paths, anchors, and components relative to the x-hei
 """
 
 from Foundation import NSPoint
-
 font = Glyphs.font
-selected_paths = []
-selected_anchors = []
 
-# Calculate combined bounding box for selected paths and components
-combined_min_y = None
-combined_max_y = None
+def get_combined_bounds(selected_paths, selected_components, selected_anchors):
+    combined_min_y, combined_max_y = float('inf'), float('-inf')
 
-for path in font.selectedLayers[0].paths:
-    if path.selected:
-        selected_paths.append(path)
-        if combined_min_y is None or path.bounds.origin.y < combined_min_y:
-            combined_min_y = path.bounds.origin.y
-        if combined_max_y is None or (path.bounds.origin.y + path.bounds.size.height) > combined_max_y:
-            combined_max_y = path.bounds.origin.y + path.bounds.size.height
+    for item in selected_paths + selected_components:
+        min_y = item.bounds.origin.y
+        max_y = item.bounds.origin.y + item.bounds.size.height
 
-for component in font.selectedLayers[0].components:
-    if component.selected:
-        selected_paths.append(component)
-        if combined_min_y is None or component.bounds.origin.y < combined_min_y:
-            combined_min_y = component.bounds.origin.y
-        if combined_max_y is None or (component.bounds.origin.y + component.bounds.size.height) > combined_max_y:
-            combined_max_y = component.bounds.origin.y + component.bounds.size.height
+        combined_min_y = min(combined_min_y, min_y)
+        combined_max_y = max(combined_max_y, max_y)
 
-for anchor in font.selectedLayers[0].anchors:
-    if anchor.selected:
-        selected_anchors.append(anchor)
-
-# Centering the combined bounding box within the x-height
-if selected_paths:
-    x_height = font.selectedLayers[0].master.xHeight
-    combined_height = combined_max_y - combined_min_y
-    move_to = (x_height/2) - (combined_height/2)
-    move_by = combined_min_y - move_to
-    move_by *= -1
-
-    if move_by == 0:
-        print("Selection is already centered")
-    else:
-        print("Centering selection, moving by %s" % move_by)
-        for path in selected_paths:
-            path.applyTransform((
-                1.0,  # x scale factor
-                0.0,  # x skew factor
-                0.0,  # y skew factor
-                1.0,  # y scale factor
-                0.0,  # x position
-                move_by  # y position
-            ))
-
-# Centering anchors
-if selected_anchors:
     for anchor in selected_anchors:
-        layer = font.selectedLayers[0]
-        height = layer.master.xHeight
-        y = height / 2 + move_by
-        x = anchor.position.x
-        print("Moving anchor %s to (%s,%s)" % (anchor.name, x, y))
-        anchor.position = NSPoint(x, y)
+        anchor_y = anchor.position.y
+
+        combined_min_y = min(combined_min_y, anchor_y)
+        combined_max_y = max(combined_max_y, anchor_y)
+
+    return combined_min_y, combined_max_y
+
+selected_paths = [path for path in font.selectedLayers[0].paths if path.selected]
+selected_components = [comp for comp in font.selectedLayers[0].components if comp.selected]
+selected_anchors = [anchor for anchor in font.selectedLayers[0].anchors if anchor.selected]
+
+include_anchors_in_bounds = not selected_paths and not selected_components
+combined_min_y, combined_max_y = get_combined_bounds(selected_paths, selected_components, selected_anchors if include_anchors_in_bounds else [])
+
+if selected_paths or selected_components or selected_anchors:
+    x_height = font.selectedLayers[0].master.xHeight
+    move_y = x_height / 2 - (combined_max_y + combined_min_y) / 2
+
+    for item in selected_paths + selected_components:
+        item.applyTransform((1.0, 0.0, 0.0, 1.0, 0.0, move_y))
+
+    for anchor in selected_anchors:
+        anchor.position = NSPoint(anchor.position.x, anchor.position.y + move_y)
 
 if not selected_paths and not selected_anchors:
     print("You haven't selected anything to center.")

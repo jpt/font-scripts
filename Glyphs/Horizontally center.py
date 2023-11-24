@@ -2,70 +2,46 @@
 # -*- coding: utf-8 -*-
 
 __doc__="""
-Horizontally centers selected paths, anchors, and components. You might find this helpful for things like the dot on an exclamation point, the strokes on the yen symbol, etc.
+Horizontally centers selected paths, anchors, and components.
 """
 
 from Foundation import NSPoint
-
 font = Glyphs.font
-selected_paths = []
-selected_anchors = []
 
-# Calculate combined bounding box for selected paths and components
-combined_min_x = None
-combined_max_x = None
+def get_combined_bounds(selected_paths, selected_components, selected_anchors):
+    combined_min_x, combined_max_x = float('inf'), float('-inf')
 
-for path in font.selectedLayers[0].paths:
-    if path.selected:
-        selected_paths.append(path)
-        if combined_min_x is None or path.bounds.origin.x < combined_min_x:
-            combined_min_x = path.bounds.origin.x
-        if combined_max_x is None or (path.bounds.origin.x + path.bounds.size.width) > combined_max_x:
-            combined_max_x = path.bounds.origin.x + path.bounds.size.width
+    for item in selected_paths + selected_components:
+        min_x = item.bounds.origin.x
+        max_x = item.bounds.origin.x + item.bounds.size.width
 
-for component in font.selectedLayers[0].components:
-    if component.selected:
-        selected_paths.append(component)
-        if combined_min_x is None or component.bounds.origin.x < combined_min_x:
-            combined_min_x = component.bounds.origin.x
-        if combined_max_x is None or (component.bounds.origin.x + component.bounds.size.width) > combined_max_x:
-            combined_max_x = component.bounds.origin.x + component.bounds.size.width
+        combined_min_x = min(combined_min_x, min_x)
+        combined_max_x = max(combined_max_x, max_x)
 
-for anchor in font.selectedLayers[0].anchors:
-    if anchor.selected:
-        selected_anchors.append(anchor)
-
-# Centering the combined bounding box within the glyph width
-if selected_paths:
-    glyph_width = font.selectedLayers[0].width
-    combined_width = combined_max_x - combined_min_x
-    move_to = (glyph_width/2) - (combined_width/2)
-    move_by = combined_min_x - move_to
-    move_by *= -1
-
-    if move_by == 0:
-        print("Selection is already centered")
-    else:
-        print("Centering selection, moving by %s" % move_by)
-        for path in selected_paths:
-            path.applyTransform((
-                1.0,  # x scale factor
-                0.0,  # x skew factor
-                0.0,  # y skew factor
-                1.0,  # y scale factor
-                move_by,  # x position
-                0.0    # y position
-            ))
-
-# Centering anchors
-if selected_anchors:
     for anchor in selected_anchors:
-        layer = font.selectedLayers[0]
-        width = layer.width
-        x = width / 2 + move_by
-        y = anchor.position.y
-        print("Moving anchor %s to (%s,%s)" % (anchor.name, x, y))
-        anchor.position = NSPoint(x, y)
+        anchor_x = anchor.position.x
+
+        combined_min_x = min(combined_min_x, anchor_x)
+        combined_max_x = max(combined_max_x, anchor_x)
+
+    return combined_min_x, combined_max_x
+
+selected_paths = [path for path in font.selectedLayers[0].paths if path.selected]
+selected_components = [comp for comp in font.selectedLayers[0].components if comp.selected]
+selected_anchors = [anchor for anchor in font.selectedLayers[0].anchors if anchor.selected]
+
+include_anchors_in_bounds = not selected_paths and not selected_components
+combined_min_x, combined_max_x = get_combined_bounds(selected_paths, selected_components, selected_anchors if include_anchors_in_bounds else [])
+
+if selected_paths or selected_components or selected_anchors:
+    glyph_width = font.selectedLayers[0].width
+    move_x = glyph_width / 2 - (combined_max_x + combined_min_x) / 2
+
+    for item in selected_paths + selected_components:
+        item.applyTransform((1.0, 0.0, 0.0, 1.0, move_x, 0.0))
+
+    for anchor in selected_anchors:
+        anchor.position = NSPoint(anchor.position.x + move_x, anchor.position.y)
 
 if not selected_paths and not selected_anchors:
     print("You haven't selected anything to center.")

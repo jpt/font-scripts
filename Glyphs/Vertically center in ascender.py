@@ -6,52 +6,42 @@ Vertically centers selected paths, anchors, and components relative to the ascen
 """
 
 from Foundation import NSPoint
-
 font = Glyphs.font
-selected_paths = []
-selected_anchors = []
 
-for path in font.selectedLayers[0].paths:
-	if path.selected:
-		selected_paths.append(path)
-for component in font.selectedLayers[0].components:
-	if component.selected:
-		selected_paths.append(component)
-for anchor in font.selectedLayers[0].anchors:
-    if anchor.selected:
-        selected_anchors.append(anchor)
+def get_combined_bounds(selected_paths, selected_components, selected_anchors):
+    combined_min_y, combined_max_y = float('inf'), float('-inf')
 
-if selected_paths:
-	ascender_height = font.selectedLayers[0].master.ascender
-	for path in selected_paths:
-		bottom = path.bounds.origin.y
-		height =  path.bounds.size.height
-		move_to = (ascender_height/2) - (height/2)
-		move_by = bottom - move_to
-		move_by *= -1
-		print(move_by)
-		
-		if move_by == 0:
-			print("Path is already centered")
-		else:
-			print("Centering path, moving by %s" % move_by)
-			path.applyTransform((
-				1.0, # x scale factor
-				0.0, # x skew factor
-				0.0, # y skew factor
-				1.0, # y scale factor
-				0.0, # x position			
-				move_by  # y position
-			))
+    for item in selected_paths + selected_components:
+        min_y = item.bounds.origin.y
+        max_y = item.bounds.origin.y + item.bounds.size.height
 
-if selected_anchors:
+        combined_min_y = min(combined_min_y, min_y)
+        combined_max_y = max(combined_max_y, max_y)
+
     for anchor in selected_anchors:
-        layer = font.selectedLayers[0]
-        height = layer.master.ascender
-        y = height / 2
-        x = anchor.position.x
-        print("Moving anchor %s to (%s,%s)" % (anchor.name,x,y))
-        anchor.position = NSPoint(x,y)
+        anchor_y = anchor.position.y
+
+        combined_min_y = min(combined_min_y, anchor_y)
+        combined_max_y = max(combined_max_y, anchor_y)
+
+    return combined_min_y, combined_max_y
+
+selected_paths = [path for path in font.selectedLayers[0].paths if path.selected]
+selected_components = [comp for comp in font.selectedLayers[0].components if comp.selected]
+selected_anchors = [anchor for anchor in font.selectedLayers[0].anchors if anchor.selected]
+
+include_anchors_in_bounds = not selected_paths and not selected_components
+combined_min_y, combined_max_y = get_combined_bounds(selected_paths, selected_components, selected_anchors if include_anchors_in_bounds else [])
+
+if selected_paths or selected_components or selected_anchors:
+    ascender_height = font.selectedLayers[0].master.ascender
+    move_y = ascender_height / 2 - (combined_max_y + combined_min_y) / 2
+
+    for item in selected_paths + selected_components:
+        item.applyTransform((1.0, 0.0, 0.0, 1.0, 0.0, move_y))
+
+    for anchor in selected_anchors:
+        anchor.position = NSPoint(anchor.position.x, anchor.position.y + move_y)
 
 if not selected_paths and not selected_anchors:
-	print("You haven't selected anything to center.")
+    print("You haven't selected anything to center.")

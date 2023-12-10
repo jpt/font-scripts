@@ -1529,9 +1529,6 @@ include(../features/classes.fea);
 			master_dir = os.path.join(temp_project_folder, "masters")
 			os.mkdir(master_dir)
 
-			# remove the OpenType substituties as they are now in the designspace as conditionsets
-			self.removeSubsFromOT()
-
 			# generate a designspace file based on metadata in the copy of the open font
 			if self.to_build["static"] or self.to_build["variable"] and not self.has_variable_font_name:
 				self.w.status.set(("Building designspace from font metadata...") + "\n" + self.w.status.get())
@@ -1547,6 +1544,10 @@ include(../features/classes.fea);
 				variable_designspace_path = "%s/%s.designspace" % (
 					temp_project_folder, self.getFamilyName("variable").replace(" ", ""))
 				variable_designspace_doc.write(variable_designspace_path)
+			
+			# remove the OpenType substituties as they are now in the designspace as conditionsets
+			self.removeSubsFromOT()
+
 			self.w.status.set(("Building UFOs for masters...") + "\n" + self.w.status.get())
 			print(" ")
 			# We only need one set of masters

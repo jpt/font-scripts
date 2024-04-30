@@ -9,7 +9,6 @@ Centers the horizontal position of an anchor between two selected points in all 
 from GlyphsApp import Glyphs, GSNode, GSAnchor, NSPoint
 
 def center_anchor_between_points(glyph):
-    # Get the active layer
     active_layer = Glyphs.font.selectedLayers[0]
     
     # Gather selected nodes and anchors from the active layer
@@ -51,17 +50,14 @@ def center_anchor_between_points(glyph):
             print(f"Error in master {layer.master.name}: {str(e)}")
             continue
 
-        # Ensure we have the same anchor by name in each layer
         anchor_name = selected_anchors[0].name
         anchor = next((a for a in layer.anchors if a.name == anchor_name), None)
 
         if anchor:
-            # Set the anchor's horizontal position to the midpoint
             anchor.position = NSPoint(midpoint_x, anchor.position.y)
             print(f"Anchor '{anchor.name}' has been centered horizontally between the selected points on master {layer.master.name}.")
         else:
             print(f"Error in master {layer.master.name}: Anchor '{anchor_name}' not found.")
 
-# Example usage:
-glyph = Glyphs.font.selectedLayers[0].parent  # Glyph corresponding to the selected layer
+glyph = Glyphs.font.selectedLayers[0].parent
 center_anchor_between_points(glyph)
